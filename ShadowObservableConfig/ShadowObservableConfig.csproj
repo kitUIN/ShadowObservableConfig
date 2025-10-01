@@ -4,6 +4,22 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    
+    <!-- NuGet 包信息 -->
+    <Version>0.5.1</Version>
+    <PackageId>ShadowObservableConfig</PackageId>
+    <Authors>kitUIN</Authors>
+    <Company>kitUIN</Company>
+    <Description>✨ ShadowObservableConfig - WinUI 响应式配置文件 ✨</Description>
+    <Copyright>Copyright 2025</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/kitUIN/ShadowObservableConfig</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/kitUIN/ShadowObservableConfig</RepositoryUrl>
+    <PackageTags>config;observable;configuration;kitUIN</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageOutputPath>..\NugetPackages</PackageOutputPath>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
 </Project>

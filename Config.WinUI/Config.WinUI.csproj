@@ -57,9 +57,16 @@
 	  <!-- 添加了内存里面的文件，不应该添加磁盘的，否则添加两份 -->
 	  <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
   </ItemGroup>
-  <ItemGroup>
+  <!-- Debug 模式：使用项目引用 -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <ProjectReference Include="..\ShadowObservableConfig.SourceGenerator\ShadowObservableConfig.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\ShadowObservableConfig.Yaml\ShadowObservableConfig.Yaml.csproj" />
+  </ItemGroup>
+
+  <!-- Release 模式：使用 NuGet 包引用 -->
+  <ItemGroup Condition="'$(Configuration)' != 'Debug'">
+    <PackageReference Include="ShadowObservableConfig.SourceGenerator" Version="0.5.1" PrivateAssets="all" />
+    <PackageReference Include="ShadowObservableConfig.Yaml" Version="0.5.1" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="新文件夹\" />

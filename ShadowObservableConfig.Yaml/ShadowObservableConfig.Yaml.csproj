@@ -6,14 +6,43 @@
 	  <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 	  <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
 	  <UseWinUI>true</UseWinUI>
+	  
+	  <!-- NuGet 包信息 -->
+	  <Version>0.5.1</Version>
+	  <PackageId>ShadowObservableConfig.Yaml.WinUI</PackageId>
+	  <Authors>kitUIN</Authors>
+	  <Company>kitUIN</Company>
+	  <Description>✨ ShadowObservableConfig.Yaml - 基于 YAML 的响应式配置文件扩展 ✨</Description>
+	  <Copyright>Copyright 2025</Copyright>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <PackageProjectUrl>https://github.com/kitUIN/ShadowObservableConfig</PackageProjectUrl>
+	  <RepositoryUrl>https://github.com/kitUIN/ShadowObservableConfig</RepositoryUrl>
+	  <PackageTags>config;observable;configuration;yaml;kitUIN</PackageTags>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <PackageOutputPath>..\NugetPackages</PackageOutputPath>
+	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
+	  <IncludeBuildOutput>true</IncludeBuildOutput>
+	  <IncludeSymbols>true</IncludeSymbols>
+	  <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
-  <ItemGroup>
+  <!-- Debug 模式：使用项目引用 -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <ProjectReference Include="..\ShadowObservableConfig\ShadowObservableConfig.csproj" />
+    <ProjectReference Include="..\ShadowObservableConfig.SourceGenerator\ShadowObservableConfig.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <Analyzer Include="..\ShadowObservableConfig.SourceGenerator\bin\Debug\netstandard2.0\ShadowObservableConfig.SourceGenerator.dll" />
+  </ItemGroup>
+
+  <!-- Release 模式：使用 NuGet 包引用 -->
+  <ItemGroup Condition="'$(Configuration)' != 'Debug'">
+    <PackageReference Include="ShadowObservableConfig" Version="0.5.1" />
+    <PackageReference Include="ShadowObservableConfig.SourceGenerator" Version="0.5.1"/>
   </ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.6584" />
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250916003" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.241107002" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.756" />
 		<PackageReference Include="YamlDotNet" Version="16.3.0" />
 	</ItemGroup>
+
 </Project>
