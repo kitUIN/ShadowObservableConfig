@@ -1,3 +1,4 @@
+using System;
 using ShadowObservableConfig.Attributes;
 using System.Collections.ObjectModel;
 
@@ -35,6 +36,9 @@ public partial class EmojiConfig
 
     [ObservableConfigProperty(Name = "RenderMode", Description = "表情渲染模式")]
     private EmojiRenderMode _renderMode;
+
+    [ObservableConfigProperty(Name = "LaunchDate", Description = "启用日期")]
+    private DateTime _launchDate;
 
     [ObservableConfigProperty(Name = "Settings", Description = "表情设置")]
     private NestedSettings _settings = new();

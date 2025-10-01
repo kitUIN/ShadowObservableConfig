@@ -226,6 +226,8 @@ public class ConfigGenerator : IIncrementalGenerator
             else
             {
                 properties.AppendLine(GenerateSimpleProperty(field, privateField, propertyName, fieldType, yamlMemberAttribute));
+                if (IsDateTimeType(fieldType))  initialization.AppendLine($"        if ({propertyName} == global::System.DateTime.MinValue) {propertyName} = global::System.DateTime.Now;");
+                
             }
         }
 
@@ -446,7 +448,29 @@ public class ConfigGenerator : IIncrementalGenerator
     /// </summary>
     private static string GenerateSimpleProperty(ConfigFieldInfo field, string privateField, string propertyName, string fieldType, string yamlMemberAttribute)
     {
-        return $$"""
+        var propertyBuilder = new StringBuilder();
+        // DateTime 特殊处理：额外的 DateTimeOffset 代理属性用于 XAML 绑定
+        if (IsDateTimeType(fieldType))
+        {
+            propertyBuilder.Append( $$"""
+                                    [global::YamlDotNet.Serialization.YamlIgnore]
+                                    public global::System.DateTimeOffset {{propertyName}}Offset
+                                    {
+                                        get => new global::System.DateTimeOffset({{propertyName}});
+                                        set
+                                        {
+                                            var currentOffset = new global::System.DateTimeOffset({{propertyName}});
+                                            if (!global::System.Collections.Generic.EqualityComparer<global::System.DateTimeOffset>.Default.Equals(currentOffset, value))
+                                            {
+                                                {{propertyName}} = value.DateTime;
+                                                OnPropertyChanged(nameof({{propertyName}}Offset));
+                                            }
+                                        }
+                                    }
+                                """);
+        }
+
+        propertyBuilder.Append($$"""
                                     /// <summary>
                                     /// {{field.Description}}
                                     /// </summary>
@@ -466,7 +490,13 @@ public class ConfigGenerator : IIncrementalGenerator
                                             }
                                         }
                                     }
-                                """;
+                                """);
+        return propertyBuilder.ToString();
+    }
+
+    private static bool IsDateTimeType(string fieldType)
+    {
+        return fieldType is "global::System.DateTime" or "System.DateTime";
     }
 
     /// <summary>

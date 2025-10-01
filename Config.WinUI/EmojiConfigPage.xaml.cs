@@ -23,6 +23,7 @@ public sealed partial class EmojiConfigPage : Page
     /// </summary>
     public Array RenderModes { get; } = Enum.GetValues(typeof(EmojiRenderMode));
 
+
     public EmojiConfigPage()
     {
         this.InitializeComponent();
@@ -90,6 +91,7 @@ public sealed partial class EmojiConfigPage : Page
             ViewModel.DefaultSkinTone = "default";
             ViewModel.AnimationSpeed = 1.0;
             ViewModel.RenderMode = EmojiRenderMode.Native;
+            ViewModel.LaunchDate = DateTime.Today;
             
             // 重置嵌套设置
             ViewModel.Settings.NestedValue = "";
