@@ -19,7 +19,7 @@
 	  <Description>✨ ShadowObservableConfig SourceGenerator ✨</Description>
 	  <Copyright>Copyright 2025</Copyright>
 	  <PackageTags>kitUIN</PackageTags>
-	  <PackageOutputPath>..\..\NugetPackages</PackageOutputPath>
+	  <PackageOutputPath>..\NugetPackages</PackageOutputPath>
 	  <NoWarn>MSB3277</NoWarn>
 	  <GenerateDocumentationFile>false</GenerateDocumentationFile>
 	  <!-- <PackageReadmeFile>README.md</PackageReadmeFile> -->

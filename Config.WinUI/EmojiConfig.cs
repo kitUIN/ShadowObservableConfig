@@ -4,12 +4,34 @@ using System.Collections.ObjectModel;
 
 namespace Config.WinUI;
 
+/// <summary>
+/// 表情渲染模式枚举
+/// </summary>
 public enum EmojiRenderMode
 {
+    /// <summary>
+    /// 原生渲染
+    /// </summary>
     Native,
+    
+    /// <summary>
+    /// Twemoji渲染
+    /// </summary>
     Twemoji,
+    
+    /// <summary>
+    /// Segoe UI渲染
+    /// </summary>
     SegoeUi,
+    
+    /// <summary>
+    /// Apple渲染
+    /// </summary>
     Apple,
+    
+    /// <summary>
+    /// Google渲染
+    /// </summary>
     Google
 }
 

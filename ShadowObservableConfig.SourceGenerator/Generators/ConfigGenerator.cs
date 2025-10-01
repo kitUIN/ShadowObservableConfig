@@ -5,6 +5,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ShadowObservableConfig.SourceGenerator.Generators;
 
+/// <summary>
+/// 配置生成器，用于自动生成可观察配置类的代码
+/// </summary>
 [Generator]
 public class ConfigGenerator : IIncrementalGenerator
 {
@@ -18,6 +21,10 @@ public class ConfigGenerator : IIncrementalGenerator
     private const string DefaultDirPath = "config";
     private const string DefaultVersion = "1.0.0";
 
+    /// <summary>
+    /// 初始化增量生成器
+    /// </summary>
+    /// <param name="context">增量生成器初始化上下文</param>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // 创建语法提供者，查找带有ObservableConfig属性的类
@@ -31,6 +38,11 @@ public class ConfigGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(configClassesProvider, Execute);
     }
 
+    /// <summary>
+    /// 检查语法节点是否为配置类
+    /// </summary>
+    /// <param name="node">语法节点</param>
+    /// <returns>如果是配置类则返回true，否则返回false</returns>
     private static bool IsConfigClass(SyntaxNode node)
     {
         if (node is not ClassDeclarationSyntax classDeclaration) return false;
@@ -42,6 +54,11 @@ public class ConfigGenerator : IIncrementalGenerator
         return HasConfigAttribute(classDeclaration);
     }
 
+    /// <summary>
+    /// 检查类声明是否具有配置特性
+    /// </summary>
+    /// <param name="classDeclaration">类声明语法</param>
+    /// <returns>如果具有配置特性则返回true，否则返回false</returns>
     private static bool HasConfigAttribute(ClassDeclarationSyntax classDeclaration)
     {
         return classDeclaration.AttributeLists
@@ -49,6 +66,11 @@ public class ConfigGenerator : IIncrementalGenerator
             .Any(attr => attr.Name.ToString() == AttributeNameShort);
     }
 
+    /// <summary>
+    /// 获取配置类信息
+    /// </summary>
+    /// <param name="context">生成器语法上下文</param>
+    /// <returns>配置类信息，如果无法获取则返回null</returns>
     private static ConfigClassInfo? GetConfigClassInfo(GeneratorSyntaxContext context)
     {
         if (context.Node is not ClassDeclarationSyntax classDeclaration) return null;
@@ -70,6 +92,11 @@ public class ConfigGenerator : IIncrementalGenerator
         };
     }
 
+    /// <summary>
+    /// 执行代码生成
+    /// </summary>
+    /// <param name="context">源代码生产上下文</param>
+    /// <param name="configClassInfo">配置类信息</param>
     private static void Execute(SourceProductionContext context, ConfigClassInfo? configClassInfo)
     {
         if (configClassInfo == null) return;
@@ -110,6 +137,12 @@ public class ConfigGenerator : IIncrementalGenerator
         }
     }
 
+    /// <summary>
+    /// 获取配置字段信息
+    /// </summary>
+    /// <param name="classSymbol">类符号</param>
+    /// <param name="compilation">编译上下文</param>
+    /// <returns>配置字段信息列表</returns>
     private static List<ConfigFieldInfo> GetConfigFields(INamedTypeSymbol classSymbol, Compilation compilation)
     {
         var configFields = new List<ConfigFieldInfo>();
@@ -339,6 +372,13 @@ public class ConfigGenerator : IIncrementalGenerator
         }
     }
 
+    /// <summary>
+    /// 获取特性值
+    /// </summary>
+    /// <param name="attribute">特性数据</param>
+    /// <param name="propertyName">属性名称</param>
+    /// <param name="defaultValue">默认值</param>
+    /// <returns>特性值或默认值</returns>
     private static string GetAttributeValue(AttributeData attribute, string propertyName, object defaultValue)
     {
         foreach (var namedArgument in attribute.NamedArguments)
@@ -369,6 +409,11 @@ public class ConfigGenerator : IIncrementalGenerator
         return $"[global::YamlDotNet.Serialization.YamlMember({string.Join(", ", yamlMemberAttributes)})]";
     }
  
+    /// <summary>
+    /// 将字符串首字母转换为小写
+    /// </summary>
+    /// <param name="input">输入字符串</param>
+    /// <returns>首字母小写的字符串</returns>
     private static string ToLowerFirstChar(string input)
     {
         if (string.IsNullOrEmpty(input) || char.IsLower(input[0]))
@@ -496,6 +541,11 @@ public class ConfigGenerator : IIncrementalGenerator
         return propertyBuilder.ToString();
     }
 
+    /// <summary>
+    /// 检查字段类型是否为DateTime类型
+    /// </summary>
+    /// <param name="fieldType">字段类型字符串</param>
+    /// <returns>如果是DateTime类型则返回true，否则返回false</returns>
     private static bool IsDateTimeType(string fieldType)
     {
         return fieldType is "global::System.DateTime" or "System.DateTime";
@@ -643,6 +693,9 @@ public class ConfigGenerator : IIncrementalGenerator
                                 """;
     }
 
+    /// <summary>
+    /// 配置类信息
+    /// </summary>
     private sealed class ConfigClassInfo
     {
         public INamedTypeSymbol ClassSymbol { get; set; } = null!;
@@ -650,6 +703,9 @@ public class ConfigGenerator : IIncrementalGenerator
         public SemanticModel SemanticModel { get; set; } = null!;
     }
 
+    /// <summary>
+    /// 配置字段信息
+    /// </summary>
     private sealed class ConfigFieldInfo
     {
         public string FieldName = "";

@@ -24,17 +24,29 @@ public sealed partial class EmojiConfigPage : Page
     public Array RenderModes { get; } = Enum.GetValues(typeof(EmojiRenderMode));
 
 
+    /// <summary>
+    /// 初始化EmojiConfigPage的新实例
+    /// </summary>
     public EmojiConfigPage()
     {
         this.InitializeComponent();
         ViewModel.ConfigChanged += ViewModel_ConfigChanged;
     }
 
+    /// <summary>
+    /// 配置变更事件处理程序
+    /// </summary>
+    /// <param name="sender">事件发送者</param>
+    /// <param name="e">配置变更事件参数</param>
     private void ViewModel_ConfigChanged(object? sender, ConfigChangedEventArgs e)
     {
         Debug.WriteLine($"配置项 '{e.FullPropertyPath}' 已更改");
     }
 
+    /// <summary>
+    /// 页面导航到时的处理
+    /// </summary>
+    /// <param name="e">导航事件参数</param>
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);

@@ -4,10 +4,19 @@ using System.Runtime.CompilerServices;
 
 namespace ShadowObservableConfig;
 
+/// <summary>
+/// 提供配置类的基础功能，包括属性变更通知和配置变更事件
+/// </summary>
 public abstract class BaseConfig : INotifyPropertyChanged
 {
+    /// <summary>
+    /// 指示配置是否已初始化
+    /// </summary>
     protected bool Initialized = false;
 
+    /// <summary>
+    /// 指示此配置是否为根配置
+    /// </summary>
     public bool IsRootConfig = false;
 
     /// <summary>
