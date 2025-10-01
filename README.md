@@ -21,7 +21,7 @@
 
 ### YAML 支持
 ```xml
-<PackageReference Include="ShadowObservableConfig.Yaml" Version="0.5.1" />
+<PackageReference Include="ShadowObservableConfig.Yaml" Version="0.5.2" />
 ```
 
 ## 🚀 快速开始

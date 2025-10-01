@@ -65,17 +65,9 @@
 
   <!-- Release 模式：使用 NuGet 包引用 -->
   <ItemGroup Condition="'$(Configuration)' != 'Debug'">
-    <PackageReference Include="ShadowObservableConfig.SourceGenerator" Version="0.5.1" PrivateAssets="all" />
-    <PackageReference Include="ShadowObservableConfig.Yaml" Version="0.5.1" />
+	  <PackageReference Include="ShadowObservableConfig.Yaml" Version="0.5.2" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="新文件夹\" />
   </ItemGroup>
-  <!-- Publish Properties -->
-  <PropertyGroup>
-    <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
-  </PropertyGroup>
 </Project>

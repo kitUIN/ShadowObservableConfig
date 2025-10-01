@@ -17,7 +17,7 @@ public abstract class BaseConfig : INotifyPropertyChanged
     /// <summary>
     /// 指示此配置是否为根配置
     /// </summary>
-    public bool IsRootConfig = false;
+    public virtual bool IsRootConfig => false;
 
     /// <summary>
     /// Property changed event that is triggered when any property value changes

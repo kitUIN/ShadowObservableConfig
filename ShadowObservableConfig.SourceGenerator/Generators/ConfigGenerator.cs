@@ -318,7 +318,8 @@ public class ConfigGenerator : IIncrementalGenerator
                          [global::YamlDotNet.Serialization.YamlIgnore] 
                          protected static global::ShadowObservableConfig.ConfigFileInfo Info => new global::ShadowObservableConfig.ConfigFileInfo("{{fileName}}", "{{dirPath}}");
                          
-                         public override bool IsRootConfig = true;
+                         public override bool IsRootConfig => true;
+                         
                          /// <summary>
                          /// Constructor
                          /// </summary>
