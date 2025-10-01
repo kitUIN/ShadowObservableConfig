@@ -41,10 +41,10 @@ public enum EmojiRenderMode
 [ObservableConfig(FileName = "emoji_config", DirPath = "config", Description = "Emoji插件配置", Version = "1.0.0")]
 public partial class EmojiConfig
 {
-    [ObservableConfigProperty(Name = "DefaultEmojiSize", Description = "默认表情大小")]
-    private int _defaultEmojiSize;
+    [ObservableConfigProperty(Description = "默认表情大小")]
+    private int defaultEmojiSize;
 
-    [ObservableConfigProperty(Name = "EnableAutoComplete", Description = "启用自动完成")]
+    [ObservableConfigProperty(Description = "启用自动完成")]
     private bool _enableAutoComplete;
 
     [ObservableConfigProperty(Name = "MaxEmojiHistory", Description = "最大表情历史记录数")]
