@@ -8,6 +8,16 @@ namespace ShadowObservableConfig.SourceGenerator.Generators;
 [Generator]
 public class ConfigGenerator : IIncrementalGenerator
 {
+    // 常量定义
+    private const string ObservableConfigAttributeName = "ShadowObservableConfig.Attributes.ObservableConfigAttribute";
+    private const string ConfigFieldAttributeName = "ShadowObservableConfig.Attributes.ObservableConfigPropertyAttribute";
+    private const string NotifyCollectionChangedInterface = "System.Collections.Specialized.INotifyCollectionChanged";
+    private const string AttributeNameShort = "ObservableConfig";
+    
+    // 默认值
+    private const string DefaultDirPath = "config";
+    private const string DefaultVersion = "1.0.0";
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // 创建语法提供者，查找带有ObservableConfig属性的类
@@ -36,7 +46,7 @@ public class ConfigGenerator : IIncrementalGenerator
     {
         return classDeclaration.AttributeLists
             .SelectMany(al => al.Attributes)
-            .Any(attr => attr.Name.ToString() == "ObservableConfig");
+            .Any(attr => attr.Name.ToString() == AttributeNameShort);
     }
 
     private static ConfigClassInfo? GetConfigClassInfo(GeneratorSyntaxContext context)
@@ -44,17 +54,16 @@ public class ConfigGenerator : IIncrementalGenerator
         if (context.Node is not ClassDeclarationSyntax classDeclaration) return null;
         
         var semanticModel = context.SemanticModel;
-        var classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration) as INamedTypeSymbol;
+        var classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration);
         
         if (classSymbol == null) return null;
 
         // 获取ConfigAttribute信息
-        var configAttribute = classSymbol.GetAttribute("ShadowObservableConfig.Attributes.ObservableConfigAttribute", semanticModel.Compilation);
+        var configAttribute = classSymbol.GetAttribute(ObservableConfigAttributeName, semanticModel.Compilation);
         if (configAttribute == null) return null;
 
         return new ConfigClassInfo
         {
-            ClassDeclaration = classDeclaration,
             ClassSymbol = classSymbol,
             ConfigAttribute = configAttribute,
             SemanticModel = semanticModel
@@ -74,14 +83,13 @@ public class ConfigGenerator : IIncrementalGenerator
 
             // 提取ConfigAttribute参数
             var fileName = GetAttributeValue(configAttribute, "FileName", "");
-            var dirPath = GetAttributeValue(configAttribute, "DirPath", "config");
+            var dirPath = GetAttributeValue(configAttribute, "DirPath", DefaultDirPath);
             var description = GetAttributeValue(configAttribute, "Description", "");
-            var version = GetAttributeValue(configAttribute, "Version", "1.0.0");
+            var version = GetAttributeValue(configAttribute, "Version", DefaultVersion);
             
-            // 如果FileName为空且是内部类，使用外部类的文件名
+            // 如果FileName为空且是内部类，跳过（内部类不生成单独文件）
             if (string.IsNullOrEmpty(fileName) && classSymbol.ContainingType != null)
             {
-                // 内部类不生成单独文件，跳过
                 return;
             }
 
@@ -93,7 +101,7 @@ public class ConfigGenerator : IIncrementalGenerator
             // 生成Config类代码
             var generatedCode = GenerateConfigClass(classSymbol, configFields, fileName, dirPath, description, version);
             
-            var fileNameSafe = classSymbol.Name.Replace("<", "").Replace(">", "");
+            var fileNameSafe = SanitizeFileName(classSymbol.Name);
             context.AddSource($"{fileNameSafe}.Config.g.cs", generatedCode);
         }
         catch (Exception ex)
@@ -105,20 +113,21 @@ public class ConfigGenerator : IIncrementalGenerator
     private static List<ConfigFieldInfo> GetConfigFields(INamedTypeSymbol classSymbol, Compilation compilation)
     {
         var configFields = new List<ConfigFieldInfo>();
-        const string configFieldAttributeName = "ShadowObservableConfig.Attributes.ObservableConfigPropertyAttribute";
 
         // 获取当前类的配置字段
         foreach (var member in classSymbol.GetMembers().OfType<IFieldSymbol>())
         {
-            if (!member.HasAttribute(configFieldAttributeName, compilation)) continue;
+            if (!member.HasAttribute(ConfigFieldAttributeName, compilation)) continue;
 
-            var fieldAttribute = member.GetAttribute(configFieldAttributeName, compilation);
+            var fieldAttribute = member.GetAttribute(ConfigFieldAttributeName, compilation);
             if (fieldAttribute == null) continue;
 
             var fieldType = member.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             var isEntityClass = IsEntityClass(member.Type, compilation);
             var isCollectionOfEntities = IsCollectionOfEntities(member.Type, compilation);
-            var isObservableCollection = isCollectionOfEntities ? isCollectionOfEntities : IsObservableCollection(member.Type, compilation);
+            // 如果是实体集合，则必然是ObservableCollection
+            var isObservableCollection = isCollectionOfEntities || IsObservableCollection(member.Type, compilation);
+            
             var fieldInfo = new ConfigFieldInfo
             {
                 FieldName = member.Name,
@@ -143,13 +152,20 @@ public class ConfigGenerator : IIncrementalGenerator
 
         return configFields;
     }
+    
+    /// <summary>
+    /// 清理文件名中的非法字符
+    /// </summary>
+    private static string SanitizeFileName(string fileName)
+    {
+        return fileName.Replace("<", "").Replace(">", "");
+    }
 
     private static string GenerateConfigClass(INamedTypeSymbol classSymbol, List<ConfigFieldInfo> configFields, 
         string fileName, string dirPath, string description, string version)
     {
         var namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
         var className = classSymbol.Name;
-        var privateFieldName = ToLowerFirstChar(className);
         
         // 如果是内部类，需要包含外部类名
         var fullClassName = className;
@@ -169,23 +185,12 @@ public class ConfigGenerator : IIncrementalGenerator
         // 生成属性
         foreach (var field in configFields)
         {
-            var privateField = $"{ToLowerFirstChar(field.FieldName)}";
+            var privateField = ToLowerFirstChar(field.FieldName);
             var propertyName = field.Name;
             var fieldType = field.FieldType;
             
             // 生成YamlMember属性
-            var yamlMemberAttributes = new List<string>();
-            if (!string.IsNullOrEmpty(field.Description))
-            {
-                yamlMemberAttributes.Add($"Description = \"{field.Description}\"");
-            }
-
-            if (string.IsNullOrEmpty(field.Alias))
-            {
-                field.Alias = propertyName;
-            }
-            yamlMemberAttributes.Add($"Alias = \"{field.Alias}\"");
-            var yamlMemberAttribute = $"[global::YamlDotNet.Serialization.YamlMember({string.Join(", ", yamlMemberAttributes)})]";
+            var yamlMemberAttribute = BuildYamlMemberAttribute(field, propertyName);
 
             // 根据字段类型生成不同的属性实现
             if (field.IsEntityClass)
@@ -314,10 +319,28 @@ public class ConfigGenerator : IIncrementalGenerator
         {
             if (namedArgument.Key == propertyName)
             {
-                return namedArgument.Value.Value?.ToString() ?? defaultValue?.ToString() ?? "";
+                return namedArgument.Value.Value?.ToString() ?? defaultValue.ToString() ?? "";
             }
         }
-        return defaultValue?.ToString() ?? "";
+        return defaultValue.ToString() ?? "";
+    }
+
+    /// <summary>
+    /// 构建YamlMember特性字符串
+    /// </summary>
+    private static string BuildYamlMemberAttribute(ConfigFieldInfo field, string propertyName)
+    {
+        var yamlMemberAttributes = new List<string>();
+        
+        if (!string.IsNullOrEmpty(field.Description))
+        {
+            yamlMemberAttributes.Add($"Description = \"{field.Description}\"");
+        }
+
+        var alias = string.IsNullOrEmpty(field.Alias) ? propertyName : field.Alias;
+        yamlMemberAttributes.Add($"Alias = \"{alias}\"");
+        
+        return $"[global::YamlDotNet.Serialization.YamlMember({string.Join(", ", yamlMemberAttributes)})]";
     }
  
     private static string ToLowerFirstChar(string input)
@@ -333,8 +356,10 @@ public class ConfigGenerator : IIncrementalGenerator
     /// </summary>
     private static bool IsEntityClass(ITypeSymbol? typeSymbol, Compilation compilation)
     {
+        if (typeSymbol == null) return false;
+        
         // 检查ObservableConfig属性中的FileName是否为空
-        var configAttribute = typeSymbol?.GetAttribute("ShadowObservableConfig.Attributes.ObservableConfigAttribute", compilation);
+        var configAttribute = typeSymbol.GetAttribute(ObservableConfigAttributeName, compilation);
         if (configAttribute == null) return false;
         
         var fileName = GetAttributeValue(configAttribute, "FileName", "");
@@ -351,22 +376,20 @@ public class ConfigGenerator : IIncrementalGenerator
         // 检查是否实现了INotifyCollectionChanged接口
         if (!IsObservableCollection(typeSymbol, compilation)) return false;
         
-        // 获取集合元素的类型
+        // 获取集合元素的类型并检查是否为实体类
         var elementType = GetCollectionElementType(typeSymbol);
-        // 检查元素类型是否为实体类
-        return elementType != null &&
-               IsEntityClass(elementType, compilation);
+        return elementType != null && IsEntityClass(elementType, compilation);
     }
 
     /// <summary>
     /// 检测类型是否实现了INotifyCollectionChanged接口
     /// </summary>
-    private static bool IsObservableCollection(ITypeSymbol typeSymbol, Compilation compilation)
+    private static bool IsObservableCollection(ITypeSymbol? typeSymbol, Compilation compilation)
     {
         if (typeSymbol == null) return false;
         
         // 获取INotifyCollectionChanged接口
-        var notifyCollectionChangedInterface = compilation.GetTypeByMetadataName("System.Collections.Specialized.INotifyCollectionChanged");
+        var notifyCollectionChangedInterface = compilation.GetTypeByMetadataName(NotifyCollectionChangedInterface);
         if (notifyCollectionChangedInterface == null) return false;
         
         // 检查类型是否实现了INotifyCollectionChanged接口
@@ -374,72 +397,27 @@ public class ConfigGenerator : IIncrementalGenerator
     }
 
     /// <summary>
-    /// 检测类型是否为集合类型（ObservableCollection）
-    /// </summary>
-    private static bool IsCollectionType(ITypeSymbol typeSymbol)
-    {
-        if (typeSymbol == null) return false;
-        
-        // 检查是否为ObservableCollection<T>类型
-        if (typeSymbol is INamedTypeSymbol namedTypeSymbol)
-        {
-            return namedTypeSymbol.Name == "ObservableCollection" && 
-                   namedTypeSymbol.ContainingNamespace.ToDisplayString() == "System.Collections.ObjectModel" &&
-                   namedTypeSymbol.TypeArguments.Length == 1;
-        }
-        
-        return false;
-    }
-
-    /// <summary>
     /// 获取集合的元素类型
     /// </summary>
-    private static ITypeSymbol? GetCollectionElementType(ITypeSymbol typeSymbol)
+    private static ITypeSymbol? GetCollectionElementType(ITypeSymbol? typeSymbol)
     {
         if (typeSymbol == null) return null;
-        
+
         // 对于泛型集合类型，直接获取第一个泛型参数
-        if (typeSymbol is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.TypeArguments.Length > 0)
+        if (typeSymbol is INamedTypeSymbol { TypeArguments.Length: > 0 } namedTypeSymbol)
         {
             return namedTypeSymbol.TypeArguments[0];
         }
-        
+
         // 尝试从IEnumerable<T>接口中获取元素类型
         var enumerableInterface = typeSymbol.AllInterfaces
             .FirstOrDefault(i => i.Name == "IEnumerable" && 
-                                i.ContainingNamespace.ToDisplayString() == "System.Collections.Generic" &&
-                                i.TypeArguments.Length == 1);
-        
+                                 i.ContainingNamespace.ToDisplayString() == "System.Collections.Generic" &&
+                                 i.TypeArguments.Length == 1);
+
         return enumerableInterface?.TypeArguments[0];
     }
 
-    /// <summary>
-    /// 生成内部类属性（继承BaseConfig的属性）
-    /// </summary>
-    private static string GenerateInnerClassProperty(ConfigFieldInfo field, string privateField, string propertyName, string fieldType, string yamlMemberAttribute)
-    {
-        return $$"""
-                                    /// <summary>
-                                    /// {{field.Description}}
-                                    /// </summary>
-                                    {{yamlMemberAttribute}}
-                                    public {{fieldType}} {{propertyName}}
-                                    {
-                                        get => {{privateField}};
-                                        set
-                                        {
-                                            // Auto Generate from GenerateInnerClassProperty
-                                            if (!global::System.Collections.Generic.EqualityComparer<{{fieldType}}>.Default.Equals({{privateField}}, value))
-                                            {
-                                                var oldValue = {{privateField}};
-                                                {{privateField}} = value;
-                                                OnPropertyChanged(nameof({{propertyName}}));
-                                                OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}));
-                                            }
-                                        }
-                                    }
-                                """;
-    }
 
     /// <summary>
     /// 生成简单属性（非实体类）
@@ -559,46 +537,22 @@ public class ConfigGenerator : IIncrementalGenerator
                                 """;
     }
 
-
-    private static INamedTypeSymbol? FindConfigClassInSameNamespace(INamedTypeSymbol mainPluginSymbol, 
-        List<ClassDeclarationSyntax> configClasses, Compilation compilation)
+    private sealed class ConfigClassInfo
     {
-        var mainPluginNamespace = mainPluginSymbol.ContainingNamespace.ToDisplayString();
-        
-        foreach (var configDeclaration in configClasses)
-        {
-            var semanticModel = compilation.GetSemanticModel(configDeclaration.SyntaxTree);
-            var configSymbol = semanticModel.GetDeclaredSymbol(configDeclaration) as INamedTypeSymbol;
-            
-            if (configSymbol == null) continue;
-            
-            // 检查是否在同一命名空间
-            if (configSymbol.ContainingNamespace.ToDisplayString() == mainPluginNamespace)
-            {
-                return configSymbol;
-            }
-        }
-        
-        return null;
-    }
-
-    private class ConfigClassInfo
-    {
-        public ClassDeclarationSyntax ClassDeclaration { get; set; } = null!;
         public INamedTypeSymbol ClassSymbol { get; set; } = null!;
         public AttributeData ConfigAttribute { get; set; } = null!;
         public SemanticModel SemanticModel { get; set; } = null!;
     }
 
-    private class ConfigFieldInfo
+    private sealed class ConfigFieldInfo
     {
-        public string FieldName { get; set; } = "";
-        public string FieldType { get; set; } = "";
-        public string Name { get; set; } = "";
-        public string Description { get; set; } = "";
-        public string Alias { get; set; } = "";
-        public bool IsEntityClass { get; set; } = false;
-        public bool IsObservableCollection { get; set; } = false;
-        public bool IsCollectionOfEntities { get; set; } = false;
+        public string FieldName = "";
+        public string FieldType = "";
+        public string Name = "";
+        public string Description = "";
+        public string Alias = "";
+        public bool IsEntityClass;
+        public bool IsObservableCollection;
+        public bool IsCollectionOfEntities;
     }
 }
