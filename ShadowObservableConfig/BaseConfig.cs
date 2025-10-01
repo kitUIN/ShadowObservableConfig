@@ -8,7 +8,7 @@ public abstract class BaseConfig : INotifyPropertyChanged
 {
     protected bool Initialized = false;
 
-    protected bool IsRootConfig = false;
+    public bool IsRootConfig = false;
 
     /// <summary>
     /// Property changed event that is triggered when any property value changes
@@ -40,9 +40,11 @@ public abstract class BaseConfig : INotifyPropertyChanged
     /// <param name="fullPropertyPath">The full property path from root</param>
     /// <param name="oldValue">The old value of the property</param>
     /// <param name="newValue">The new value of the property</param>
-    protected virtual void OnConfigChanged(string propertyName, string fullPropertyPath, object oldValue, object newValue, Type type)
+    /// <param name="type">The type of the property</param>
+    /// <param name="autoSave">Whether to automatically save the configuration file when this change occurs</param>
+    protected virtual void OnConfigChanged(string propertyName, string fullPropertyPath, object oldValue, object newValue, Type type, bool autoSave = true)
     {
-        ConfigChanged?.Invoke(this, new ConfigChangedEventArgs(propertyName, fullPropertyPath, oldValue, newValue, type));
+        ConfigChanged?.Invoke(this, new ConfigChangedEventArgs(propertyName, fullPropertyPath, oldValue, newValue, type, autoSave));
     }
 
 }

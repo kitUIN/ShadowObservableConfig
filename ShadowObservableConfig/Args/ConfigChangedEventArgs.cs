@@ -7,10 +7,12 @@
 /// <param name="OldValue">The old value of the property</param>
 /// <param name="NewValue">The new value of the property</param>
 /// <param name="PropertyType">The type of the property</param>
+/// <param name="AutoSave">Whether to automatically save the configuration file when this change occurs</param>
 public record ConfigChangedEventArgs(
     string PropertyName,
     string FullPropertyPath,
     object OldValue,
     object NewValue,
-    Type PropertyType
+    Type PropertyType,
+    bool AutoSave = true
 );

@@ -135,6 +135,7 @@ public class ConfigGenerator : IIncrementalGenerator
                 Name = GetAttributeValue(fieldAttribute, "Name", member.Name),
                 Description = GetAttributeValue(fieldAttribute, "Description", ""),
                 Alias = GetAttributeValue(fieldAttribute, "Alias", ""),
+                AutoSave = GetAttributeValue(fieldAttribute, "AutoSave", "true").ToLower() == "true",
                 IsEntityClass = isEntityClass,
                 IsObservableCollection = isObservableCollection,
                 IsCollectionOfEntities = isCollectionOfEntities
@@ -284,6 +285,7 @@ public class ConfigGenerator : IIncrementalGenerator
                          [global::YamlDotNet.Serialization.YamlIgnore] 
                          protected static global::ShadowObservableConfig.ConfigFileInfo Info => new global::ShadowObservableConfig.ConfigFileInfo("{{fileName}}", "{{dirPath}}");
                          
+                         public override bool IsRootConfig = true;
                          /// <summary>
                          /// Constructor
                          /// </summary>
@@ -317,7 +319,7 @@ public class ConfigGenerator : IIncrementalGenerator
                          
                          protected void InvokeSaveFileOnChange(object? sender, global::ShadowObservableConfig.Args.ConfigChangedEventArgs e)
                          {
-                             Save();
+                             if (e.AutoSave) Save();
                          }
                          
                          public void Save()
@@ -486,7 +488,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                                 {{privateField}} = value;
                                                 OnPropertyChanged(nameof({{propertyName}}));
                                                 if (!Initialized) return;
-                                                OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}));
+                                                OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}), {{field.AutoSave.ToString().ToLower()}});
                                             }
                                         }
                                     }
@@ -516,14 +518,13 @@ public class ConfigGenerator : IIncrementalGenerator
                                         {
                                             if (!global::System.Collections.Generic.EqualityComparer<{{fieldType}}>.Default.Equals({{privateField}}, value))
                                             {
-
                                                 if ({{privateField}} != null) {{privateField}}.ConfigChanged -= On{{propertyName}}ConfigChanged;
                                                 var oldValue = {{privateField}};
                                                 {{privateField}} = value;
                                                 {{privateField}}.ConfigChanged += On{{propertyName}}ConfigChanged;
                                                 if (!Initialized) return;
                                                 OnPropertyChanged(nameof({{propertyName}}));
-                                                OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}));
+                                                OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}), {{field.AutoSave.ToString().ToLower()}});
                                             }
                                         }
                                     }
@@ -537,7 +538,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                         var fullPropertyPath = string.IsNullOrEmpty(e.FullPropertyPath) 
                                             ? $"{{propertyName}}.{e.PropertyName}" 
                                             : $"{{propertyName}}.{e.FullPropertyPath}";
-                                        OnConfigChanged(nameof({{propertyName}}), fullPropertyPath, e.OldValue, e.NewValue, e.PropertyType);
+                                        OnConfigChanged(nameof({{propertyName}}), fullPropertyPath, e.OldValue, e.NewValue, e.PropertyType, e.AutoSave);
                                     }
                                 """;
     }
@@ -617,7 +618,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                 {{collectionEntitySet2Builder}}
                                                 if (!Initialized) return;
                                                 OnPropertyChanged(nameof({{propertyName}}));
-                                                OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}));
+                                                OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}), {{field.AutoSave.ToString().ToLower()}});
                                             }
                                         }
                                     }
@@ -625,7 +626,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                     protected void On{{propertyName}}CollectionChanged(object? sender, global::System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
                                     {
                                 {{collectionChangedBuilder}}
-                                        OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), e.OldItems, e.NewItems, typeof({{fieldType}}));
+                                        OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), e.OldItems, e.NewItems, typeof({{fieldType}}), {{field.AutoSave.ToString().ToLower()}});
                                     }
                                     
                                     /// <summary>
@@ -637,7 +638,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                         var fullPropertyPath = string.IsNullOrEmpty(e.FullPropertyPath) 
                                             ? $"{{propertyName}}[Item].{e.PropertyName}" 
                                             : $"{{propertyName}}[Item].{e.FullPropertyPath}";
-                                        OnConfigChanged(nameof({{propertyName}}), fullPropertyPath, e.OldValue, e.NewValue, e.PropertyType);
+                                        OnConfigChanged(nameof({{propertyName}}), fullPropertyPath, e.OldValue, e.NewValue, e.PropertyType, e.AutoSave);
                                     }
                                 """;
     }
@@ -656,6 +657,7 @@ public class ConfigGenerator : IIncrementalGenerator
         public string Name = "";
         public string Description = "";
         public string Alias = "";
+        public bool AutoSave = true;
         public bool IsEntityClass;
         public bool IsObservableCollection;
         public bool IsCollectionOfEntities;
