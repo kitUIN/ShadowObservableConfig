@@ -138,6 +138,18 @@ public class ConfigGenerator : IIncrementalGenerator
     }
 
     /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="memberName"></param>
+    /// <returns></returns>
+    private static string GetDefaultName(string memberName)
+    {
+        if (string.IsNullOrEmpty(memberName)) return "";
+        memberName = memberName.TrimStart('_');
+        return char.ToUpper(memberName[0]) + memberName.Substring(1);
+    }
+
+    /// <summary>
     /// 获取配置字段信息
     /// </summary>
     /// <param name="classSymbol">类符号</param>
@@ -160,14 +172,14 @@ public class ConfigGenerator : IIncrementalGenerator
             var isCollectionOfEntities = IsCollectionOfEntities(member.Type, compilation);
             // 如果是实体集合，则必然是ObservableCollection
             var isObservableCollection = isCollectionOfEntities || IsObservableCollection(member.Type, compilation);
-            
+            var propName = GetAttributeValue(fieldAttribute, "Name", GetDefaultName(member.Name));
             var fieldInfo = new ConfigFieldInfo
             {
                 FieldName = member.Name,
                 FieldType = fieldType,
-                Name = GetAttributeValue(fieldAttribute, "Name", member.Name),
+                Name = propName,
                 Description = GetAttributeValue(fieldAttribute, "Description", ""),
-                Alias = GetAttributeValue(fieldAttribute, "Alias", ""),
+                Alias = GetAttributeValue(fieldAttribute, "Alias", propName),
                 AutoSave = GetAttributeValue(fieldAttribute, "AutoSave", "true").ToLower() == "true",
                 IsEntityClass = isEntityClass,
                 IsObservableCollection = isObservableCollection,

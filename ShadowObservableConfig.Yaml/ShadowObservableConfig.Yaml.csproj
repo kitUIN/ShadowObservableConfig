@@ -11,7 +11,7 @@
 	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	  <LangVersion>12</LangVersion>
 	  <!-- NuGet 包信息 -->
-	  <Version>0.5.4</Version>
+	  <Version>0.5.5</Version>
 	  <PackageId>ShadowObservableConfig.Yaml</PackageId>
 	  <Authors>kitUIN</Authors>
 	  <Company>kitUIN</Company>
