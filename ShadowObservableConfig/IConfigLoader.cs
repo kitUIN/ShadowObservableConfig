@@ -24,4 +24,12 @@ public interface IConfigLoader
     /// <param name="configPath">配置文件路径</param>
     /// <returns>加载的配置对象，如果加载失败则返回null</returns>
     T? Load<T>(string configPath) where T : BaseConfig;
+
+    /// <summary>
+    /// 从指定的YAML配置文件路径加载配置对象
+    /// </summary>
+    /// <param name="configPath">YAML配置文件路径</param>
+    /// <param name="type">类型,继承自BaseConfig</param>
+    /// <returns>加载的配置对象，如果文件不存在或加载失败则返回null</returns>
+    object? Load(string configPath, Type type);
 }

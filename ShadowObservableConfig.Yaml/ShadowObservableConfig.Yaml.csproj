@@ -11,7 +11,7 @@
 	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	  <LangVersion>12</LangVersion>
 	  <!-- NuGet 包信息 -->
-	  <Version>0.5.3</Version>
+	  <Version>0.5.4</Version>
 	  <PackageId>ShadowObservableConfig.Yaml</PackageId>
 	  <Authors>kitUIN</Authors>
 	  <Company>kitUIN</Company>
@@ -39,7 +39,7 @@
 
   <!-- Release 模式：使用 NuGet 包引用 -->
   <ItemGroup Condition="'$(Configuration)' != 'Debug'">
-    <PackageReference Include="ShadowObservableConfig" Version="0.5.3" />
+    <PackageReference Include="ShadowObservableConfig" Version="0.5.4" />
     <PackageReference Include="ShadowObservableConfig.SourceGenerator" Version="0.5.2"/>
   </ItemGroup>
 	<!-- WinUI3 平台依赖 -->
