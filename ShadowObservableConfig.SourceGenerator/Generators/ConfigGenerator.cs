@@ -495,6 +495,56 @@ public class ConfigGenerator : IIncrementalGenerator
     /// </summary>
     private static string GenerateEntityCollectionProperty(ConfigFieldInfo field, string privateField, string propertyName, string fieldType, string yamlMemberAttribute)
     {
+        var collectionEntitySet1Builder = new StringBuilder();
+        var collectionEntitySet2Builder = new StringBuilder();
+        var collectionChangedBuilder = new StringBuilder();
+        if (field.IsCollectionOfEntities)
+        {
+            collectionChangedBuilder.Append($$"""
+                                              if (e.Action != global::System.Collections.Specialized.NotifyCollectionChangedAction.Move)
+                                              {
+                                                  if(e.OldItems is global::System.Collections.IEnumerable oldItems)
+                                                  {
+                                                      foreach(var item in oldItems)
+                                                      {
+                                                          if (item is global::ShadowObservableConfig.BaseConfig configItem)
+                                                              configItem.ConfigChanged -= On{{propertyName}}ItemConfigChanged;
+                                                      }
+                                                  }
+                                                  
+                                                  if (e.Action != global::System.Collections.Specialized.NotifyCollectionChangedAction.Remove 
+                                                      && e.NewItems is global::System.Collections.IEnumerable newItems)
+                                                  {
+                                                      foreach(var item in newItems)
+                                                      {
+                                                          if (item is global::ShadowObservableConfig.BaseConfig configItem)
+                                                              configItem.ConfigChanged += On{{propertyName}}ItemConfigChanged;
+                                                      }
+                                                  }
+                                              }
+                                              """);
+            collectionEntitySet1Builder.Append($$"""
+                                                  if(oldValue is global::System.Collections.IEnumerable oldItems)
+                                                  {
+                                                      foreach(var item in oldItems) 
+                                                      {
+                                                          if (item is global::ShadowObservableConfig.BaseConfig configItem)
+                                                              configItem.ConfigChanged -= On{{{propertyName}}}ItemConfigChanged;
+                                                      }
+                                                  }
+                                                  """);
+            collectionEntitySet2Builder.Append($$"""
+                                                       if({{privateField}} is global::System.Collections.IEnumerable newItems)
+                                                       {
+                                                           foreach(var item in newItems) 
+                                                           {
+                                                               if (item is global::ShadowObservableConfig.BaseConfig configItem)
+                                                                   configItem.ConfigChanged += On{{propertyName}}ItemConfigChanged;
+                                                           }
+                                                       }
+                                                       """);
+        }
+
         return $$"""
                                     /// <summary>
                                     /// {{field.Description}}
@@ -509,8 +559,10 @@ public class ConfigGenerator : IIncrementalGenerator
                                             {
                                                 if ({{privateField}} != null) {{privateField}}.CollectionChanged -= On{{propertyName}}CollectionChanged;
                                                 var oldValue = {{privateField}};
+                                                {{collectionEntitySet1Builder}}
                                                 {{privateField}} = value;
                                                 {{privateField}}.CollectionChanged += On{{propertyName}}CollectionChanged;
+                                                {{collectionEntitySet2Builder}}
                                                 if (!Initialized) return;
                                                 OnPropertyChanged(nameof({{propertyName}}));
                                                 OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}));
@@ -520,6 +572,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                     
                                     protected void On{{propertyName}}CollectionChanged(object? sender, global::System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
                                     {
+                                        {{collectionChangedBuilder}}
                                         OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), e.OldItems, e.NewItems, typeof({{fieldType}}));
                                     }
                                     

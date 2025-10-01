@@ -1,6 +1,5 @@
-using ShadowObservableConfig;
 using ShadowObservableConfig.Attributes;
-using System.IO;
+using System.Collections.ObjectModel;
 
 namespace Config.WinUI;
 
@@ -26,7 +25,13 @@ public partial class EmojiConfig
     private double _animationSpeed;
 
     [ObservableConfigProperty(Name = "Settings", Description = "表情设置")]
-    private NestedSettings _settings = new();
+    private NestedSettings _settings;
+
+    [ObservableConfigProperty(Name = "FavoriteEmojis", Description = "收藏的表情列表")]
+    private ObservableCollection<string> _favoriteEmojis;
+
+    [ObservableConfigProperty(Name = "CustomSettings", Description = "自定义设置列表")]
+    private ObservableCollection<NestedSettings> _customSettings;
 }
 
 /// <summary>

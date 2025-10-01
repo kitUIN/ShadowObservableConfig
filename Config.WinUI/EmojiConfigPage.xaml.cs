@@ -1,14 +1,10 @@
-using Microsoft.ML.OnnxRuntime;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using Microsoft.VisualBasic.FileIO;
 using System;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using ShadowObservableConfig.Args;
-using YamlDotNet.Core.Tokens;
 
 namespace Config.WinUI;
 
@@ -94,6 +90,12 @@ public sealed partial class EmojiConfigPage : Page
             ViewModel.Settings.NestedNumber = 0;
             ViewModel.Settings.NestedBoolean = false;
             
+            // 清空收藏表情列表
+            ViewModel.FavoriteEmojis.Clear();
+            
+            // 清空自定义设置列表
+            ViewModel.CustomSettings.Clear();
+            
             UpdateStatus("已重置为默认值");
         }
         catch (Exception ex)
@@ -126,6 +128,97 @@ public sealed partial class EmojiConfigPage : Page
         if (DefaultSkinToneComboBox.SelectedItem is ComboBoxItem selectedItem)
         {
             ViewModel.DefaultSkinTone = selectedItem.Tag?.ToString() ?? "default";
+        }
+    }
+
+    /// <summary>
+    /// 添加表情按钮点击事件
+    /// </summary>
+    private void AddEmojiButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var emojiText = NewEmojiTextBox.Text?.Trim();
+            if (string.IsNullOrEmpty(emojiText))
+            {
+                UpdateStatus("请输入要添加的表情");
+                return;
+            }
+
+            if (ViewModel.FavoriteEmojis.Contains(emojiText))
+            {
+                UpdateStatus("该表情已存在于收藏列表中");
+                return;
+            }
+
+            ViewModel.FavoriteEmojis.Add(emojiText);
+            NewEmojiTextBox.Text = "";
+            UpdateStatus($"已添加表情: {emojiText}");
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus($"添加表情失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 删除表情按钮点击事件
+    /// </summary>
+    private void RemoveEmojiButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (sender is Button button && button.Tag is string emoji)
+            {
+                ViewModel.FavoriteEmojis.Remove(emoji);
+                UpdateStatus($"已删除表情: {emoji}");
+            }
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus($"删除表情失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 添加自定义设置按钮点击事件
+    /// </summary>
+    private void AddCustomSettingButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var newSetting = new NestedSettings
+            {
+                NestedValue = "新设置",
+                NestedNumber = 0,
+                NestedBoolean = false
+            };
+
+            ViewModel.CustomSettings.Add(newSetting);
+            UpdateStatus("已添加新的自定义设置");
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus($"添加自定义设置失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 删除自定义设置按钮点击事件
+    /// </summary>
+    private void RemoveCustomSettingButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (sender is Button button && button.Tag is NestedSettings setting)
+            {
+                ViewModel.CustomSettings.Remove(setting);
+                UpdateStatus("已删除自定义设置");
+            }
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus($"删除自定义设置失败: {ex.Message}");
         }
     }
 }
