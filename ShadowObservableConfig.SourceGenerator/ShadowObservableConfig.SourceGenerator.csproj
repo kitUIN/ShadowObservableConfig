@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFramework>netstandard2.0</TargetFramework>
+	  <IsRoslynComponent>true</IsRoslynComponent>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <Nullable>enable</Nullable>
+	  <LangVersion>latest</LangVersion>
+
+	  <Version>0.5.1</Version>
+	  <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+	  <PackageId>ShadowObservableConfig.SourceGenerator</PackageId>
+	  <Owner>kitUIN</Owner>
+	  <Authors>kitUIN</Authors>
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <PackageProjectUrl>https://github.com/kitUIN/ShadowObservableConfig</PackageProjectUrl>
+	  <RepositoryUrl>https://github.com/kitUIN/ShadowObservableConfig</RepositoryUrl>
+	  <Description>✨ ShadowObservableConfig SourceGenerator ✨</Description>
+	  <Copyright>Copyright 2025</Copyright>
+	  <PackageTags>kitUIN</PackageTags>
+	  <PackageOutputPath>..\..\NugetPackages</PackageOutputPath>
+	  <NoWarn>MSB3277</NoWarn>
+	  <GenerateDocumentationFile>false</GenerateDocumentationFile>
+	  <!-- <PackageReadmeFile>README.md</PackageReadmeFile> -->
+	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" PrivateAssets="all" />
+	  <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" PrivateAssets="all" />
+
+  </ItemGroup>
+
+  <ItemGroup>
+	  <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" />
+  </ItemGroup>
+
+</Project>

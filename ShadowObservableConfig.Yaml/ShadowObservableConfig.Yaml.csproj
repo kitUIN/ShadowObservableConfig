@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	  <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+	  <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+	  <UseWinUI>true</UseWinUI>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ShadowObservableConfig\ShadowObservableConfig.csproj" />
+  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.6584" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250916003" />
+		<PackageReference Include="YamlDotNet" Version="16.3.0" />
+	</ItemGroup>
+</Project>
