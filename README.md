@@ -68,6 +68,16 @@ public partial class AppSettings
 ### 2. 在 WinUI 3 中使用
 
 ```csharp
+// App.xaml.cs
+public App()
+{
+    ShadowConfigGlobalSetting.Init(new ShadowYamlConfigSetting());
+    InitializeComponent();
+}
+```
+
+
+```csharp
 public sealed partial class MainPage : Page
 {
     public AppConfig ViewModel { get; } = AppConfig.Load();
