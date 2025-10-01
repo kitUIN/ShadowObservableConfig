@@ -161,7 +161,7 @@ public class ConfigGenerator : IIncrementalGenerator
         var isInnerClass = string.IsNullOrEmpty(fileName);
 
         var properties = new StringBuilder();
-        var initialization = new StringBuilder();
+        var initialization = new StringBuilder("\n");
         var saveMethod = new StringBuilder();
         var loadMethod = new StringBuilder();
 
@@ -187,18 +187,15 @@ public class ConfigGenerator : IIncrementalGenerator
             var yamlMemberAttribute = $"[global::YamlDotNet.Serialization.YamlMember({string.Join(", ", yamlMemberAttributes)})]";
 
             // 根据字段类型生成不同的属性实现
-            if (isInnerClass)
-            {
-                // 内部类生成简单的属性
-                properties.AppendLine(GenerateInnerClassProperty(field, privateField, propertyName, fieldType, yamlMemberAttribute));
-            }
-            else if (field.IsEntityClass)
+            if (field.IsEntityClass)
             {
                 properties.AppendLine(GenerateEntityProperty(field, privateField, propertyName, fieldType, yamlMemberAttribute));
+                initialization.AppendLine($"        if ({propertyName} == null) {propertyName} = new();");
             }
             else if (field.IsCollectionOfEntities)
             {
                 properties.AppendLine(GenerateEntityCollectionProperty(field, privateField, propertyName, fieldType, yamlMemberAttribute));
+                initialization.AppendLine($"        if ({propertyName} == null) {propertyName} = new();");
             }
             else
             {
@@ -227,7 +224,7 @@ public class ConfigGenerator : IIncrementalGenerator
                          /// 构造函数
                          /// </summary>
                          public {{fullClassName}}()
-                         {
+                         {{{initialization}}
                              Initialized = true;
                              AfterConfigInit();
                          }
@@ -262,6 +259,7 @@ public class ConfigGenerator : IIncrementalGenerator
                          /// </summary>
                          public {{fullClassName}}()
                          {
+                         {{initialization}}
                          }
                          public void Init()
                          {
@@ -287,7 +285,7 @@ public class ConfigGenerator : IIncrementalGenerator
                              return obj;
                          }
                          
-                         protected void InvokeSaveFileOnChange(object sender, global::ShadowObservableConfig.Args.ConfigChangedEventArgs e)
+                         protected void InvokeSaveFileOnChange(object? sender, global::ShadowObservableConfig.Args.ConfigChangedEventArgs e)
                          {
                              Save();
                          }
@@ -413,6 +411,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                         get => {{privateField}};
                                         set
                                         {
+                                            // Auto Generate from GenerateInnerClassProperty
                                             if (!global::System.Collections.Generic.EqualityComparer<{{fieldType}}>.Default.Equals({{privateField}}, value))
                                             {
                                                 var oldValue = {{privateField}};
@@ -471,7 +470,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                             if (!global::System.Collections.Generic.EqualityComparer<{{fieldType}}>.Default.Equals({{privateField}}, value))
                                             {
 
-                                                {{privateField}}.ConfigChanged -= On{{propertyName}}ConfigChanged;
+                                                if ({{privateField}} != null) {{privateField}}.ConfigChanged -= On{{propertyName}}ConfigChanged;
                                                 var oldValue = {{privateField}};
                                                 {{privateField}} = value;
                                                 {{privateField}}.ConfigChanged += On{{propertyName}}ConfigChanged;
@@ -485,7 +484,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                     /// <summary>
                                     /// {{propertyName}}实体变更事件处理
                                     /// </summary>
-                                    private void On{{propertyName}}ConfigChanged(object sender, global::ShadowObservableConfig.Args.ConfigChangedEventArgs e)
+                                    private void On{{propertyName}}ConfigChanged(object? sender, global::ShadowObservableConfig.Args.ConfigChangedEventArgs e)
                                     {
                                         // 使用实体传递的完整路径，如果没有则构建：外部属性名.内部属性名
                                         var fullPropertyPath = string.IsNullOrEmpty(e.FullPropertyPath) 
@@ -513,10 +512,10 @@ public class ConfigGenerator : IIncrementalGenerator
                                         {
                                             if (!global::System.Collections.Generic.EqualityComparer<{{fieldType}}>.Default.Equals({{privateField}}, value))
                                             {
-                                                {{privateField}}.CollectionChanged -= {{propertyName}}CollectionChanged;
+                                                if ({{privateField}} != null) {{privateField}}.CollectionChanged -= On{{propertyName}}CollectionChanged;
                                                 var oldValue = {{privateField}};
                                                 {{privateField}} = value;
-                                                {{privateField}}.CollectionChanged += {{propertyName}}CollectionChanged;
+                                                {{privateField}}.CollectionChanged += On{{propertyName}}CollectionChanged;
                                                 if (!Initialized) return;
                                                 OnPropertyChanged(nameof({{propertyName}}));
                                                 OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}));
@@ -524,7 +523,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                         }
                                     }
                                     
-                                    protected void {{propertyName}}CollectionChanged(object? sender, global::System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+                                    protected void On{{propertyName}}CollectionChanged(object? sender, global::System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
                                     {
                                         OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), e.OldItems, e.NewItems, typeof({{fieldType}}));
                                     }
@@ -532,7 +531,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                     /// <summary>
                                     /// {{propertyName}}集合中实体变更事件处理
                                     /// </summary>
-                                    private void On{{propertyName}}ItemConfigChanged(object sender, global::ShadowObservableConfig.Args.ConfigChangedEventArgs e)
+                                    private void On{{propertyName}}ItemConfigChanged(object? sender, global::ShadowObservableConfig.Args.ConfigChangedEventArgs e)
                                     {
                                         // 使用实体传递的完整路径，如果没有则构建：集合属性名[Item].内部属性名
                                         var fullPropertyPath = string.IsNullOrEmpty(e.FullPropertyPath) 
