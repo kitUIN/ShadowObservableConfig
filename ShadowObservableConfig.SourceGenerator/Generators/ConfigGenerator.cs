@@ -118,7 +118,7 @@ public class ConfigGenerator : IIncrementalGenerator
             var fieldType = member.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             var isEntityClass = IsEntityClass(member.Type, compilation);
             var isCollectionOfEntities = IsCollectionOfEntities(member.Type, compilation);
-
+            var isObservableCollection = isCollectionOfEntities ? isCollectionOfEntities : IsObservableCollection(member.Type, compilation);
             var fieldInfo = new ConfigFieldInfo
             {
                 FieldName = member.Name,
@@ -127,6 +127,7 @@ public class ConfigGenerator : IIncrementalGenerator
                 Description = GetAttributeValue(fieldAttribute, "Description", ""),
                 Alias = GetAttributeValue(fieldAttribute, "Alias", ""),
                 IsEntityClass = isEntityClass,
+                IsObservableCollection = isObservableCollection,
                 IsCollectionOfEntities = isCollectionOfEntities
             };
 
@@ -192,7 +193,7 @@ public class ConfigGenerator : IIncrementalGenerator
                 properties.AppendLine(GenerateEntityProperty(field, privateField, propertyName, fieldType, yamlMemberAttribute));
                 initialization.AppendLine($"        if ({propertyName} == null) {propertyName} = new();");
             }
-            else if (field.IsCollectionOfEntities)
+            else if (field.IsObservableCollection)
             {
                 properties.AppendLine(GenerateEntityCollectionProperty(field, privateField, propertyName, fieldType, yamlMemberAttribute));
                 initialization.AppendLine($"        if ({propertyName} == null) {propertyName} = new();");
@@ -347,14 +348,29 @@ public class ConfigGenerator : IIncrementalGenerator
     {
         if (typeSymbol == null) return false;
         
-        // 检查是否为集合类型
-        if (!IsCollectionType(typeSymbol)) return false;
+        // 检查是否实现了INotifyCollectionChanged接口
+        if (!IsObservableCollection(typeSymbol, compilation)) return false;
         
         // 获取集合元素的类型
         var elementType = GetCollectionElementType(typeSymbol);
         // 检查元素类型是否为实体类
         return elementType != null &&
                IsEntityClass(elementType, compilation);
+    }
+
+    /// <summary>
+    /// 检测类型是否实现了INotifyCollectionChanged接口
+    /// </summary>
+    private static bool IsObservableCollection(ITypeSymbol typeSymbol, Compilation compilation)
+    {
+        if (typeSymbol == null) return false;
+        
+        // 获取INotifyCollectionChanged接口
+        var notifyCollectionChangedInterface = compilation.GetTypeByMetadataName("System.Collections.Specialized.INotifyCollectionChanged");
+        if (notifyCollectionChangedInterface == null) return false;
+        
+        // 检查类型是否实现了INotifyCollectionChanged接口
+        return typeSymbol.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, notifyCollectionChangedInterface));
     }
 
     /// <summary>
@@ -382,18 +398,19 @@ public class ConfigGenerator : IIncrementalGenerator
     {
         if (typeSymbol == null) return null;
         
-        // 对于ObservableCollection<T>，直接获取泛型参数
-        if (typeSymbol is INamedTypeSymbol namedTypeSymbol)
+        // 对于泛型集合类型，直接获取第一个泛型参数
+        if (typeSymbol is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.TypeArguments.Length > 0)
         {
-            if (namedTypeSymbol.Name == "ObservableCollection" && 
-                namedTypeSymbol.ContainingNamespace.ToDisplayString() == "System.Collections.ObjectModel" &&
-                namedTypeSymbol.TypeArguments.Length == 1)
-            {
-                return namedTypeSymbol.TypeArguments[0];
-            }
+            return namedTypeSymbol.TypeArguments[0];
         }
         
-        return null;
+        // 尝试从IEnumerable<T>接口中获取元素类型
+        var enumerableInterface = typeSymbol.AllInterfaces
+            .FirstOrDefault(i => i.Name == "IEnumerable" && 
+                                i.ContainingNamespace.ToDisplayString() == "System.Collections.Generic" &&
+                                i.TypeArguments.Length == 1);
+        
+        return enumerableInterface?.TypeArguments[0];
     }
 
     /// <summary>
@@ -581,6 +598,7 @@ public class ConfigGenerator : IIncrementalGenerator
         public string Description { get; set; } = "";
         public string Alias { get; set; } = "";
         public bool IsEntityClass { get; set; } = false;
+        public bool IsObservableCollection { get; set; } = false;
         public bool IsCollectionOfEntities { get; set; } = false;
     }
 }
