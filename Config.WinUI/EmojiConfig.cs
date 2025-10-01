@@ -3,6 +3,15 @@ using System.Collections.ObjectModel;
 
 namespace Config.WinUI;
 
+public enum EmojiRenderMode
+{
+    Native,
+    Twemoji,
+    SegoeUi,
+    Apple,
+    Google
+}
+
 /// <summary>
 /// Emoji插件配置类
 /// </summary>
@@ -23,6 +32,9 @@ public partial class EmojiConfig
 
     [ObservableConfigProperty(Name = "AnimationSpeed", Description = "动画速度")]
     private double _animationSpeed;
+
+    [ObservableConfigProperty(Name = "RenderMode", Description = "表情渲染模式")]
+    private EmojiRenderMode _renderMode;
 
     [ObservableConfigProperty(Name = "Settings", Description = "表情设置")]
     private NestedSettings _settings = new();

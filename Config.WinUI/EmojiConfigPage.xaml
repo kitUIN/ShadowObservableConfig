@@ -92,6 +92,18 @@
                            Margin="0,4,0,0"/>
             </StackPanel>
 
+            <!-- 表情渲染模式 -->
+            <StackPanel>
+                <TextBlock Text="表情渲染模式" 
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Margin="0,0,0,8"/>
+                <ComboBox x:Name="RenderModeComboBox"
+                          ItemsSource="{x:Bind RenderModes}"
+                          SelectedItem="{x:Bind ViewModel.RenderMode, Mode=TwoWay}"
+                          Width="200"
+                          HorizontalAlignment="Left"/>
+            </StackPanel>
+
             <!-- 分隔线 -->
             <Border Height="1" Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Margin="0,10"/>
 

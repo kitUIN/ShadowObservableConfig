@@ -18,6 +18,11 @@ public sealed partial class EmojiConfigPage : Page
     /// </summary>
     public EmojiConfig ViewModel { get; } = EmojiConfig.Load();
 
+    /// <summary>
+    /// 渲染模式枚举集合（供下拉框绑定）
+    /// </summary>
+    public Array RenderModes { get; } = Enum.GetValues(typeof(EmojiRenderMode));
+
     public EmojiConfigPage()
     {
         this.InitializeComponent();
@@ -84,6 +89,7 @@ public sealed partial class EmojiConfigPage : Page
             ViewModel.MaxEmojiHistory = 50;
             ViewModel.DefaultSkinTone = "default";
             ViewModel.AnimationSpeed = 1.0;
+            ViewModel.RenderMode = EmojiRenderMode.Native;
             
             // 重置嵌套设置
             ViewModel.Settings.NestedValue = "";
