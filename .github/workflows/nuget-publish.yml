@@ -32,7 +32,6 @@ jobs:
         uses: microsoft/setup-msbuild@v1.0.2
       - name: Create NugetPackages
         run: |
-          cd ..
           mkdir NugetPackages
 
       - name: Build Packages
@@ -45,7 +44,7 @@ jobs:
           dotnet build $env:Solution_Name3/$env:Solution_Name3.csproj -p:Configuration=Release
       - name: Push package to Nuget registry
         run: |
-          cd ..\NugetPackages
+          cd NugetPackages
           ls
           dotnet nuget push "*.nupkg" -s "https://api.nuget.org/v3/index.json" -k $env:NUGET_KEY --skip-duplicate        
           dotnet nuget push "*.snupkg" -s "https://api.nuget.org/v3/index.json" -k $env:NUGET_KEY --skip-duplicate        
