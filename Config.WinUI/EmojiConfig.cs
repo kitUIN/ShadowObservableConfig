@@ -25,13 +25,13 @@ public partial class EmojiConfig
     private double _animationSpeed;
 
     [ObservableConfigProperty(Name = "Settings", Description = "表情设置")]
-    private NestedSettings _settings;
+    private NestedSettings _settings = new();
 
     [ObservableConfigProperty(Name = "FavoriteEmojis", Description = "收藏的表情列表")]
-    private ObservableCollection<string> _favoriteEmojis;
+    private ObservableCollection<string> _favoriteEmojis = new ();
 
     [ObservableConfigProperty(Name = "CustomSettings", Description = "自定义设置列表")]
-    private ObservableCollection<NestedSettings> _customSettings;
+    private ObservableCollection<NestedSettings> _customSettings = new();
 }
 
 /// <summary>
