@@ -11,8 +11,8 @@
 public record ConfigChangedEventArgs(
     string PropertyName,
     string FullPropertyPath,
-    object OldValue,
-    object NewValue,
+    object? OldValue,
+    object? NewValue,
     Type PropertyType,
     bool AutoSave = true
 );

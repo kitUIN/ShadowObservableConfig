@@ -1,7 +1,6 @@
 ﻿namespace ShadowObservableConfig.Yaml;
 
 using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 using ShadowObservableConfig;
 
 /// <summary>

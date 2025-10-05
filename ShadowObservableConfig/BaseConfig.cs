@@ -51,9 +51,12 @@ public abstract class BaseConfig : INotifyPropertyChanged
     /// <param name="newValue">The new value of the property</param>
     /// <param name="type">The type of the property</param>
     /// <param name="autoSave">Whether to automatically save the configuration file when this change occurs</param>
-    protected virtual void OnConfigChanged(string propertyName, string fullPropertyPath, object oldValue, object newValue, Type type, bool autoSave = true)
+    protected virtual void OnConfigChanged(string propertyName, string fullPropertyPath, object? oldValue,
+        object? newValue, Type type, bool autoSave = true)
     {
-        ConfigChanged?.Invoke(this, new ConfigChangedEventArgs(propertyName, fullPropertyPath, oldValue, newValue, type, autoSave));
+        ConfigChanged?.Invoke(this,
+            new ConfigChangedEventArgs(propertyName, fullPropertyPath, oldValue, newValue, type, autoSave));
     }
+
 
 }

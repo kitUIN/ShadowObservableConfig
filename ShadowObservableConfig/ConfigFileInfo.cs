@@ -9,27 +9,33 @@ public class ConfigFileInfo
     /// 初始化ConfigFileInfo的新实例
     /// </summary>
     /// <param name="fileName">配置文件名（不包含扩展名）</param>
+    /// <param name="fileExt">配置文件扩展名(包含.)</param>
     /// <param name="dirFolder">配置文件所在的目录文件夹</param>
-    public ConfigFileInfo(string fileName, string dirFolder)
+    public ConfigFileInfo(string fileName, string fileExt, string dirFolder)
     {
         DirFolder = dirFolder;
-        FileName = fileName + ShadowConfigGlobalSetting.ConfigSetting.ConfigLoader.Ext;
-        ConfigFilePath = Path.Combine(
-            ShadowConfigGlobalSetting.ConfigSetting.RootFolder, DirFolder, FileName);
+        FileName = fileName + fileExt;
+        FileExt = fileExt;
+        ConfigFilePath = Path.Combine(GlobalSetting.RootFolder, DirFolder, FileName);
     }
 
     /// <summary>
     /// 获取配置文件的完整路径
     /// </summary>
     public string ConfigFilePath { get; }
-    
+
     /// <summary>
     /// 获取配置文件所在的目录文件夹
     /// </summary>
     public string DirFolder { get; }
-    
+
     /// <summary>
     /// 获取配置文件名（包含扩展名）
     /// </summary>
     public string FileName { get; }
+
+    /// <summary>
+    /// 配置文件扩展名(包含.)
+    /// </summary>
+    public string FileExt { get; }
 }
