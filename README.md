@@ -2,7 +2,7 @@
 
 [![NuGet Version](https://img.shields.io/nuget/v/ShadowObservableConfig.svg)](https://www.nuget.org/packages/ShadowObservableConfig)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![.NET](https://img.shields.io/badge/.NET-6.0%20%7C%208.0-blue.svg)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-6.0--9.0-blue.svg)](https://dotnet.microsoft.com/)
 
 一个为 WinUI 3 设计的响应式配置文件管理库，通过源代码生成器自动生成配置类，支持 YAML/JSON 格式配置文件，提供完整的 MVVM 数据绑定支持。
 
