@@ -20,6 +20,11 @@ public abstract class BaseConfig : INotifyPropertyChanged
     public virtual bool IsRootConfig => false;
 
     /// <summary>
+    /// 当前文件的版本号
+    /// </summary>
+    public abstract string CurrentConfigVersion { get; set; }
+
+    /// <summary>
     /// Property changed event that is triggered when any property value changes
     /// Used to support WPF/WinUI data binding mechanism
     /// </summary>
@@ -57,6 +62,4 @@ public abstract class BaseConfig : INotifyPropertyChanged
         ConfigChanged?.Invoke(this,
             new ConfigChangedEventArgs(propertyName, fullPropertyPath, oldValue, newValue, type, autoSave));
     }
-
-
 }

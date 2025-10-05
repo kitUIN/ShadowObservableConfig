@@ -4,42 +4,62 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![.NET](https://img.shields.io/badge/.NET-6.0%20%7C%208.0-blue.svg)](https://dotnet.microsoft.com/)
 
-一个专为 WinUI 3 应用程序设计的响应式配置文件管理库，通过源代码生成器自动生成配置类，支持 YAML 格式配置文件，提供完整的 MVVM 数据绑定支持。
+一个为 WinUI 3 设计的响应式配置文件管理库，通过源代码生成器自动生成配置类，支持 YAML/JSON 格式配置文件，提供完整的 MVVM 数据绑定支持。
 
 ## 🌟 特性
 
 - **🚀 源代码生成器**：自动生成配置类，减少样板代码
-- **📱 WinUI 3 支持**：专为 WinUI 3 应用程序优化
+- **📱 WinUI 3 支持**：为 WinUI 3 应用程序优化
 - **🔄 响应式配置**：支持 `INotifyPropertyChanged` 和 `INotifyCollectionChanged`
-- **📄 YAML 支持**：内置 YAML 配置文件支持
+- **📄 YAML 支持**：YAML 配置文件支持(YamlDotNet)
+- **📄 JSON 支持**：JSON 配置文件支持(Newtonsoft.Json)
 - **🎯 类型安全**：编译时类型检查，避免运行时错误
 - **🔧 自动保存**：配置更改时自动保存到文件
 - **📦 嵌套配置**：支持复杂的嵌套配置结构
-- **🎨 数据绑定**：完美支持 WinUI 3 数据绑定
+- **🎨 数据绑定**：完美支持 WinUI 数据绑定
 
 ## 📦 安装
 
 ### YAML 支持
 ```xml
-<PackageReference Include="ShadowObservableConfig.Yaml" Version="0.5.3" />
+<PackageReference Include="ShadowObservableConfig.Yaml" Version="0.6.0" />
+```
+
+```csharp
+// In App.xaml.cs
+ShadowObservableConfig.GlobalSetting.Init(ApplicationData.Current.LocalFolder.Path,
+[
+    new ShadowObservableConfig.Yaml.YamlConfigLoader()
+]);
+```
+### YAML 支持
+```xml
+<PackageReference Include="ShadowObservableConfig.Json" Version="0.6.0" />
+```
+
+```csharp
+// In App.xaml.cs
+ShadowObservableConfig.GlobalSetting.Init(ApplicationData.Current.LocalFolder.Path,
+[
+    new ShadowObservableConfig.Json.JsonConfigLoader()
+]);
 ```
 
 ## 🚀 快速开始
 
-### 1. 创建配置类
+`FileExt` 根据安装的库可选: `.yaml` 或 `.json`
+
+### 1. 创建配置类(以yaml为例子)
 
 ```csharp
 using ShadowObservableConfig.Attributes;
 using System.Collections.ObjectModel;
 
-[ObservableConfig(FileName = "app_config", DirPath = "config", Description = "应用程序配置", Version = "1.0.0")]
+[ObservableConfig(FileName = "app_config", FileExt = ".yaml", DirPath = "config", Description = "应用程序配置", Version = "1.0.0")]
 public partial class AppConfig
 {
     [ObservableConfigProperty(Name = "AppName", Description = "应用程序名称")]
     private string _appName = "My App";
-
-    [ObservableConfigProperty(Name = "Version", Description = "应用程序版本")]
-    private string _version = "1.0.0";
 
     [ObservableConfigProperty(Name = "IsEnabled", Description = "是否启用")]
     private bool _isEnabled = true;
@@ -65,14 +85,17 @@ public partial class AppSettings
 }
 ```
 
-### 2. 在 WinUI 3 中使用
+### 2. 在 WinUI 3 中使用(以yaml为例子)
 
 ```csharp
 // App.xaml.cs
 public App()
 {
-    ShadowConfigGlobalSetting.Init(new ShadowYamlConfigSetting());
     InitializeComponent();
+    ShadowObservableConfig.GlobalSetting.Init(ApplicationData.Current.LocalFolder.Path,
+    [
+        new ShadowObservableConfig.Yaml.YamlConfigLoader()
+    ]);
 }
 ```
 
@@ -124,6 +147,7 @@ public sealed partial class MainPage : Page
 
 #### ObservableConfigAttribute
 - `FileName`: 配置文件名（不含扩展名）不填该项说明当前类是内部类
+- `FileExt`: 配置文件扩展名
 - `DirPath`: 配置文件目录（默认为 "config"）
 - `Description`: 配置描述
 - `Version`: 配置版本
@@ -131,12 +155,14 @@ public sealed partial class MainPage : Page
 #### ObservableConfigPropertyAttribute
 - `Name`: 属性在配置文件中的名称
 - `Description`: 属性描述
+- `Alias`: 属性别名(只在yaml有效)
+- `AutoSave`: 是否自动保存（默认为 true）
 
 ### 支持的数据类型
 
-- 基本类型：`string`, `int`, `double`, `bool`, `DateTime`
+- 基本类型：`string`, `int`, `double`, `bool`, `DateTime`等
 - 枚举类型：任何 `enum` 类型
-- 集合类型：`ObservableCollection<T>`, `List<T>`
+- 集合类型：`ObservableCollection<T>`
 - 嵌套对象：其他标记了 `[ObservableConfig]` 的类
 
 ### 自动生成的方法
@@ -169,6 +195,8 @@ public class CustomConfigLoader : IConfigLoader
 }
 ```
 
+自定义结束记得在`ShadowObservableConfig.GlobalSetting.Init`里设置
+
 ### 配置初始化回调
 
 ```csharp
@@ -197,6 +225,7 @@ ShadowObservableConfig/
 ├── ShadowObservableConfig.SourceGenerator/  # 源代码生成器
 │   └── Generators/                     # 生成器实现
 ├── ShadowObservableConfig.Yaml/        # YAML 支持扩展
+├── ShadowObservableConfig.Json/        # JSON 支持扩展
 └── Config.WinUI/                       # WinUI 3 示例应用
 ```
 
@@ -211,6 +240,7 @@ ShadowObservableConfig/
 ## 🙏 致谢
 
 - [YamlDotNet](https://github.com/aaubry/YamlDotNet) - YAML 序列化库
+- [Newtonsoft.Json](https://www.newtonsoft.com/json) - JSON 序列化库
 - [Microsoft.CodeAnalysis](https://github.com/dotnet/roslyn) - 源代码分析 API
 - [WinUI 3](https://github.com/microsoft/microsoft-ui-xaml) - 现代 Windows 应用框架
 

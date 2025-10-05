@@ -308,6 +308,16 @@ public class ConfigGenerator : IIncrementalGenerator
                      public partial class {{fullClassName}} : global::ShadowObservableConfig.BaseConfig
                      {
                          /// <summary>
+                         /// ConfigVersion
+                         /// </summary>
+                         public static string ConfigVersion => "{{version}}";
+                         
+                         /// <summary>
+                         /// CurrentConfigVersion
+                         /// </summary>
+                         public override string CurrentConfigVersion { get; set; } = "{{version}}";
+                         
+                         /// <summary>
                          /// 构造函数
                          /// </summary>
                          public {{fullClassName}}()
@@ -342,6 +352,17 @@ public class ConfigGenerator : IIncrementalGenerator
                      /// </summary>
                      public partial class {{fullClassName}} : global::ShadowObservableConfig.BaseConfig
                      { 
+                         
+                         /// <summary>
+                         /// ConfigVersion
+                         /// </summary>
+                         public static string ConfigVersion => "{{version}}";
+                         
+                         /// <summary>
+                         /// CurrentConfigVersion
+                         /// </summary>
+                         public override string CurrentConfigVersion { get; set; } = "{{version}}";
+                         
                          /// <summary>
                          /// ConfigFileInfo
                          /// </summary>

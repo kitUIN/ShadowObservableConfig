@@ -13,6 +13,7 @@ jobs:
       Solution_Name: ShadowObservableConfig.SourceGenerator
       Solution_Name2: ShadowObservableConfig
       Solution_Name3: ShadowObservableConfig.Yaml
+      Solution_Name4: ShadowObservableConfig.Json
     steps:
       - uses: mickem/clean-after-action@v1
 
@@ -42,6 +43,8 @@ jobs:
           dotnet build $env:Solution_Name2/$env:Solution_Name2.csproj -p:Configuration=Release
           dotnet restore $env:Solution_Name3/$env:Solution_Name3.csproj
           dotnet build $env:Solution_Name3/$env:Solution_Name3.csproj -p:Configuration=Release
+          dotnet restore $env:Solution_Name4/$env:Solution_Name4.csproj
+          dotnet build $env:Solution_Name4/$env:Solution_Name4.csproj -p:Configuration=Release
       - name: Push package to Nuget registry
         run: |
           cd NugetPackages
