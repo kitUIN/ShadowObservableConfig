@@ -61,11 +61,13 @@
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <ProjectReference Include="..\ShadowObservableConfig.SourceGenerator\ShadowObservableConfig.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\ShadowObservableConfig.Yaml\ShadowObservableConfig.Yaml.csproj" />
+    <ProjectReference Include="..\ShadowObservableConfig.Json\ShadowObservableConfig.Json.csproj" />
   </ItemGroup>
 
   <!-- Release 模式：使用 NuGet 包引用 -->
   <ItemGroup Condition="'$(Configuration)' != 'Debug'">
-	  <PackageReference Include="ShadowObservableConfig.Yaml" Version="0.5.2" />
+	  <PackageReference Include="ShadowObservableConfig.Yaml" Version="0.6.0" />
+	  <PackageReference Include="ShadowObservableConfig.Yaml" Version="0.6.0" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="新文件夹\" />

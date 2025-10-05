@@ -14,7 +14,7 @@ public class ObservableConfigAttribute: Attribute
     /// <summary>
     /// Configuration file extension (with dot)
     /// </summary>
-    public string? Ext { get; init; } = ".yaml";
+    public string? FileExt { get; init; } = ".yaml";
 
     /// <summary>
     /// Configuration file directory

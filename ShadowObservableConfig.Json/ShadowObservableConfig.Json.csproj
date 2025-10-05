@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <Nullable>enable</Nullable>
+	  <LangVersion>12</LangVersion>
+	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
+	  <!-- NuGet 包信息 -->
+	  <Version>0.6.0</Version>
+	  <PackageId>ShadowObservableConfig.Json</PackageId>
+	  <Authors>kitUIN</Authors>
+	  <Company>kitUIN</Company>
+	  <Description>✨ ShadowObservableConfig.Json - 基于 Json 的响应式配置文件扩展 ✨</Description>
+	  <Copyright>Copyright 2025</Copyright>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <PackageProjectUrl>https://github.com/kitUIN/ShadowObservableConfig</PackageProjectUrl>
+	  <RepositoryUrl>https://github.com/kitUIN/ShadowObservableConfig</RepositoryUrl>
+	  <PackageTags>config;observable;configuration;json;kitUIN</PackageTags>
+	  <!-- <PackageReadmeFile>README.md</PackageReadmeFile> -->
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <PackageOutputPath>..\NugetPackages</PackageOutputPath>
+	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
+	  <IncludeBuildOutput>true</IncludeBuildOutput>
+	  <IncludeSymbols>true</IncludeSymbols>
+	  <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <!-- Debug 模式：使用项目引用 -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+	  <ProjectReference Include="..\ShadowObservableConfig\ShadowObservableConfig.csproj" />
+	  <ProjectReference Include="..\ShadowObservableConfig.SourceGenerator\ShadowObservableConfig.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	  <Analyzer Include="..\ShadowObservableConfig.SourceGenerator\bin\Debug\netstandard2.0\ShadowObservableConfig.SourceGenerator.dll" />
+  </ItemGroup>
+
+  <!-- Release 模式：使用 NuGet 包引用 -->
+  <ItemGroup Condition="'$(Configuration)' != 'Debug'">
+	  <PackageReference Include="ShadowObservableConfig" Version="0.6.0" />
+	  <PackageReference Include="ShadowObservableConfig.SourceGenerator" Version="0.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
+</Project>

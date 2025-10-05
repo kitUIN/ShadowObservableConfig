@@ -1,7 +1,5 @@
 ﻿using Microsoft.UI.Xaml;
-using ShadowObservableConfig;
 using Windows.Storage;
-using ShadowObservableConfig.Yaml;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -21,7 +19,10 @@ namespace Config.WinUI
         /// </summary>
         public App()
         {
-            GlobalSetting.Init(ApplicationData.Current.LocalFolder.Path, [new YamlConfigLoader()]);
+            ShadowObservableConfig.GlobalSetting.Init(ApplicationData.Current.LocalFolder.Path,
+            [
+                new ShadowObservableConfig.Yaml.YamlConfigLoader(), new ShadowObservableConfig.Json.JsonConfigLoader()
+            ]);
             InitializeComponent();
         }
 

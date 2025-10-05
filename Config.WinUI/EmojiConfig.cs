@@ -13,22 +13,22 @@ public enum EmojiRenderMode
     /// 原生渲染
     /// </summary>
     Native,
-    
+
     /// <summary>
     /// Twemoji渲染
     /// </summary>
     Twemoji,
-    
+
     /// <summary>
     /// Segoe UI渲染
     /// </summary>
     SegoeUi,
-    
+
     /// <summary>
     /// Apple渲染
     /// </summary>
     Apple,
-    
+
     /// <summary>
     /// Google渲染
     /// </summary>
@@ -38,7 +38,8 @@ public enum EmojiRenderMode
 /// <summary>
 /// Emoji插件配置类
 /// </summary>
-[ObservableConfig(FileName = "emoji_config", DirPath = "config", Description = "Emoji插件配置", Version = "1.0.0")]
+[ObservableConfig(FileName = "emoji_config", FileExt = ".json", DirPath = "config", Description = "Emoji插件配置",
+    Version = "1.0.0")]
 public partial class EmojiConfig
 {
     [ObservableConfigProperty(Description = "默认表情大小")]
@@ -66,7 +67,7 @@ public partial class EmojiConfig
     private NestedSettings _settings = new();
 
     [ObservableConfigProperty(Name = "FavoriteEmojis", Description = "收藏的表情列表")]
-    private ObservableCollection<string> _favoriteEmojis = new ();
+    private ObservableCollection<string> _favoriteEmojis = new();
 
     [ObservableConfigProperty(Name = "CustomSettings", Description = "自定义设置列表")]
     private ObservableCollection<NestedSettings> _customSettings = new();
