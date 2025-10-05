@@ -212,6 +212,7 @@ public class ConfigGenerator : IIncrementalGenerator
     {
         return fileName.Replace("<", "").Replace(">", "");
     }
+
     private static string GenerateConfigClass(INamedTypeSymbol classSymbol, List<ConfigFieldInfo> configFields,
         string fileName, string fileExt, string dirPath, string description, string version)
     {
@@ -233,6 +234,7 @@ public class ConfigGenerator : IIncrementalGenerator
         var saveMethod = new StringBuilder();
         var loadMethod = new StringBuilder();
 
+        var ignoreAttribute = BuildIgnoreAttribute(fileExt);
         // 生成属性
         foreach (var field in configFields)
         {
@@ -241,7 +243,7 @@ public class ConfigGenerator : IIncrementalGenerator
             var fieldType = field.FieldType;
 
             // 生成YamlMember属性
-            var yamlMemberAttribute = BuildYamlMemberAttribute(field, propertyName);
+            var yamlMemberAttribute = BuildMemberAttribute(field, propertyName, fileExt);
 
             // 根据字段类型生成不同的属性实现
             if (field.IsEntityClass)
@@ -280,7 +282,7 @@ public class ConfigGenerator : IIncrementalGenerator
             else
             {
                 properties.AppendLine(GenerateSimpleProperty(field, privateField, propertyName, fieldType,
-                    yamlMemberAttribute));
+                    yamlMemberAttribute, ignoreAttribute));
                 if (IsDateTimeType(fieldType))
                     initialization.AppendLine(
                         $"        if ({propertyName} == global::System.DateTime.MinValue) {propertyName} = global::System.DateTime.Now;");
@@ -315,7 +317,7 @@ public class ConfigGenerator : IIncrementalGenerator
                          }
 
                      {{properties}}
-                     
+
                          /// <summary>
                          /// AfterConfigInit
                          /// </summary>
@@ -340,17 +342,21 @@ public class ConfigGenerator : IIncrementalGenerator
                      /// </summary>
                      public partial class {{fullClassName}} : global::ShadowObservableConfig.BaseConfig
                      { 
-                         /// <inheritdoc />
-                         [global::YamlDotNet.Serialization.YamlIgnore] 
+                         /// <summary>
+                         /// ConfigFileInfo
+                         /// </summary>
+                         {{ignoreAttribute}}
                          protected static global::ShadowObservableConfig.ConfigFileInfo Info => new global::ShadowObservableConfig.ConfigFileInfo("{{fileName}}", "{{fileExt}}", "{{dirPath}}");
                          
                          /// <inheritdoc />
-                         [global::YamlDotNet.Serialization.YamlIgnore] 
+                         {{ignoreAttribute}}
                          public override bool IsRootConfig => true;
-                     
-                         /// <inheritdoc />
-                         [global::YamlDotNet.Serialization.YamlIgnore] 
-                         protected static global::ShadowObservableConfig.IConfigLoader Loader { get; } = global::ShadowObservableConfig.GlobalSetting.GetConfigLoader("{{fileExt}}");
+
+                         /// <summary>
+                         /// ConfigLoader
+                         /// </summary>
+                         {{ignoreAttribute}}
+                         protected static global::ShadowObservableConfig.IConfigLoader Loader { get; private set; }
 
                          /// <summary>
                          /// Constructor
@@ -379,6 +385,7 @@ public class ConfigGenerator : IIncrementalGenerator
                              {
                                  global::System.IO.Directory.CreateDirectory(configDir);
                              }
+                             Loader ??= global::ShadowObservableConfig.GlobalSetting.GetConfigLoader("{{fileExt}}");
                              var obj = Loader.Load<{{fullClassName}}>(Info.ConfigFilePath);
                              if (obj is null)
                              {
@@ -389,7 +396,7 @@ public class ConfigGenerator : IIncrementalGenerator
                              return obj;
                          }
                          
-                     
+
                          /// <summary>
                          /// InvokeSaveFileOnChange
                          /// </summary>
@@ -441,22 +448,43 @@ public class ConfigGenerator : IIncrementalGenerator
         return defaultValue.ToString() ?? "";
     }
 
+    private static string BuildIgnoreAttribute(string fileExt)
+    {
+        if (fileExt == ".yaml")
+        {
+            return "[global::YamlDotNet.Serialization.YamlIgnore]";
+        }
+        else if (fileExt == ".json")
+        {
+            return "[global::Newtonsoft.Json.JsonIgnore]";
+        }
+
+        return "";
+    }
+
     /// <summary>
     /// 构建YamlMember特性字符串
     /// </summary>
-    private static string BuildYamlMemberAttribute(ConfigFieldInfo field, string propertyName)
+    private static string BuildMemberAttribute(ConfigFieldInfo field, string propertyName, string fileExt)
     {
-        var yamlMemberAttributes = new List<string>();
-
-        if (!string.IsNullOrEmpty(field.Description))
+        var alias = string.IsNullOrEmpty(field.Alias) ? propertyName : field.Alias;
+        if (fileExt == ".yaml")
         {
-            yamlMemberAttributes.Add($"Description = \"{field.Description}\"");
+            var yamlMemberAttributes = new List<string>();
+            if (!string.IsNullOrEmpty(field.Description))
+            {
+                yamlMemberAttributes.Add($"Description = \"{field.Description}\"");
+            }
+
+            yamlMemberAttributes.Add($"Alias = \"{alias}\"");
+            return $"[global::YamlDotNet.Serialization.YamlMember({string.Join(", ", yamlMemberAttributes)})]";
+        }
+        else if (fileExt == ".json")
+        {
+            return $"[global::Newtonsoft.Json.JsonProperty(\"{alias}\")]";
         }
 
-        var alias = string.IsNullOrEmpty(field.Alias) ? propertyName : field.Alias;
-        yamlMemberAttributes.Add($"Alias = \"{alias}\"");
-
-        return $"[global::YamlDotNet.Serialization.YamlMember({string.Join(", ", yamlMemberAttributes)})]";
+        return "";
     }
 
     /// <summary>
@@ -545,14 +573,14 @@ public class ConfigGenerator : IIncrementalGenerator
     /// 生成简单属性（非实体类）
     /// </summary>
     private static string GenerateSimpleProperty(ConfigFieldInfo field, string privateField, string propertyName,
-        string fieldType, string yamlMemberAttribute)
+        string fieldType, string yamlMemberAttribute, string ignoreAttribute)
     {
         var propertyBuilder = new StringBuilder();
         // DateTime 特殊处理：额外的 DateTimeOffset 代理属性用于 XAML 绑定
         if (IsDateTimeType(fieldType))
         {
             propertyBuilder.Append($$"""
-                                         [global::YamlDotNet.Serialization.YamlIgnore]
+                                         {{ignoreAttribute}}
                                          public global::System.DateTimeOffset {{propertyName}}Offset
                                          {
                                              get => new global::System.DateTimeOffset({{propertyName}});
@@ -582,13 +610,27 @@ public class ConfigGenerator : IIncrementalGenerator
                                              if (!global::System.Collections.Generic.EqualityComparer<{{fieldType}}>.Default.Equals({{privateField}}, value))
                                              {
                                                  var oldValue = {{privateField}};
+                                                 Before{{propertyName}}Changed(ref value);
                                                  {{privateField}} = value;
                                                  OnPropertyChanged(nameof({{propertyName}}));
+                                                 After{{propertyName}}Changed(oldValue, value);
                                                  if (!Initialized) return;
                                                  OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}), {{field.AutoSave.ToString().ToLower()}});
                                              }
                                          }
                                      }
+                                     
+                                     /// <summary>
+                                     /// Before{{propertyName}}Changed
+                                     /// </summary>
+                                     partial void Before{{propertyName}}Changed(ref {{fieldType}} value);
+                                     
+                                     /// <summary>
+                                     /// After{{propertyName}}Changed
+                                     /// </summary>
+                                     partial void After{{propertyName}}Changed({{fieldType}} oldValue, {{fieldType}} newValue);
+                                     
+                                     
                                  """);
         return propertyBuilder.ToString();
     }
@@ -598,7 +640,7 @@ public class ConfigGenerator : IIncrementalGenerator
     /// </summary>
     /// <param name="fieldType">字段类型字符串</param>
     /// <returns>如果是DateTime类型则返回true，否则返回false</returns>
-    private static bool IsDateTimeType(string fieldType)
+    private  static bool IsDateTimeType(string fieldType)
     {
         return fieldType is "global::System.DateTime" or "System.DateTime";
     }
@@ -607,13 +649,13 @@ public class ConfigGenerator : IIncrementalGenerator
     /// 生成实体类属性（支持递归变更通知）
     /// </summary>
     private static string GenerateEntityProperty(ConfigFieldInfo field, string privateField, string propertyName,
-        string fieldType, string yamlMemberAttribute)
+        string fieldType, string memberAttribute)
     {
         return $$"""
                      /// <summary>
                      /// {{field.Description}}
                      /// </summary>
-                     {{yamlMemberAttribute}}
+                     {{memberAttribute}}
                      public {{fieldType}} {{propertyName}}
                      {
                          get => {{privateField}};
