@@ -32,7 +32,7 @@ ShadowObservableConfig.GlobalSetting.Init(ApplicationData.Current.LocalFolder.Pa
     new ShadowObservableConfig.Yaml.YamlConfigLoader()
 ]);
 ```
-### YAML 支持
+### JSON 支持
 ```xml
 <PackageReference Include="ShadowObservableConfig.Json" Version="0.6.0" />
 ```
