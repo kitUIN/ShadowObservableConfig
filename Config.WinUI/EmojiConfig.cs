@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using ShadowObservableConfig.Attributes;
 using System.Collections.ObjectModel;
+using System.Text.Json.Nodes;
 
 namespace Config.WinUI;
 
@@ -69,6 +71,9 @@ public partial class EmojiConfig
     [ObservableConfigProperty(Name = "FavoriteEmojis", Description = "收藏的表情列表")]
     private ObservableCollection<string> _favoriteEmojis = new();
 
+    [ObservableConfigProperty(Name = "CustomDict", Description = "自定义Dict")]
+    private Dictionary<string, string> _customDict = new();
+    
     [ObservableConfigProperty(Name = "CustomSettings", Description = "自定义设置列表")]
     private ObservableCollection<NestedSettings> _customSettings = new();
 }

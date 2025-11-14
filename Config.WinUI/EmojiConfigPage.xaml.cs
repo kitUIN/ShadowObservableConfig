@@ -115,6 +115,9 @@ public sealed partial class EmojiConfigPage : Page
             
             // 清空自定义设置列表
             ViewModel.CustomSettings.Clear();
+
+            // 清空自定义字典
+            ViewModel.CustomDict.Clear();
             
             UpdateStatus("已重置为默认值");
         }
@@ -239,6 +242,62 @@ public sealed partial class EmojiConfigPage : Page
         catch (Exception ex)
         {
             UpdateStatus($"删除自定义设置失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 添加自定义Dict按钮点击事件
+    /// </summary>
+    private void AddCustomDictButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var key = NewCustomKeyTextBox.Text?.Trim();
+            var value = NewCustomValueTextBox.Text?.Trim();
+
+            if (string.IsNullOrEmpty(key))
+            {
+                UpdateStatus("请输入键 (Key)");
+                return;
+            }
+
+            if (ViewModel.CustomDict.ContainsKey(key))
+            {
+                UpdateStatus("该键已存在");
+                return;
+            }
+
+            ViewModel.CustomDict[key] = value ?? string.Empty;
+            ViewModel.Save();
+            NewCustomKeyTextBox.Text = string.Empty;
+            NewCustomValueTextBox.Text = string.Empty;
+            UpdateStatus($"已添加自定义键值: {key}");
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus($"添加自定义Dict失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 删除自定义Dict按钮点击事件
+    /// </summary>
+    private void RemoveCustomDictButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (sender is Button button && button.Tag is string key)
+            {
+                if (ViewModel.CustomDict.ContainsKey(key))
+                {
+                    ViewModel.CustomDict.Remove(key);
+                    UpdateStatus($"已删除自定义键: {key}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus($"删除自定义Dict失败: {ex.Message}");
         }
     }
 }

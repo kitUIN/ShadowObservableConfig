@@ -256,6 +256,48 @@
                 </ListView>
             </StackPanel>
 
+            <!-- 自定义Dict -->
+            <TextBlock Text="自定义 Dict" 
+                       Style="{StaticResource SubtitleTextBlockStyle}"
+                       Margin="0,0,0,10"/>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,8">
+                    <TextBox x:Name="NewCustomKeyTextBox"
+                             Width="150"
+                             PlaceholderText="键 (Key)"/>
+                    <TextBox x:Name="NewCustomValueTextBox"
+                             Width="250"
+                             PlaceholderText="值 (Value)"/>
+                    <Button x:Name="AddCustomDictButton"
+                            Content="添加"
+                            Click="AddCustomDictButton_Click"
+                            HorizontalAlignment="Left"/>
+                </StackPanel>
+
+                <ListView x:Name="CustomDictListView"
+                          ItemsSource="{x:Bind ViewModel.CustomDict, Mode=OneWay}"
+                          Height="150"
+                          SelectionMode="Single">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="{Binding Key}" 
+                                           Style="{StaticResource BodyTextBlockStyle}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text=":" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Value}" 
+                                           Style="{StaticResource BodyTextBlockStyle}"
+                                           VerticalAlignment="Center"/>
+                                <Button Content="删除"
+                                        Click="RemoveCustomDictButton_Click"
+                                        Tag="{Binding Key}"
+                                        Padding="8,4"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </StackPanel>
+
             <!-- 操作按钮 -->
             <StackPanel Orientation="Horizontal" 
                         HorizontalAlignment="Center" 
