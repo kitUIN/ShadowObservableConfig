@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using ShadowObservableConfig.Attributes;
 using System.Collections.ObjectModel;
-using System.Text.Json.Nodes;
 
 namespace Config.WinUI;
 
@@ -54,7 +53,7 @@ public partial class EmojiConfig
     private int _maxEmojiHistory;
 
     [ObservableConfigProperty(Name = "DefaultSkinTone", Description = "默认肤色")]
-    private string _defaultSkinTone = null!;
+    private string? _defaultSkinTone;
 
     [ObservableConfigProperty(Name = "AnimationSpeed", Description = "动画速度")]
     private double _animationSpeed;
@@ -72,7 +71,7 @@ public partial class EmojiConfig
     private ObservableCollection<string> _favoriteEmojis = new();
 
     [ObservableConfigProperty(Name = "CustomDict", Description = "自定义Dict")]
-    private Dictionary<string, string> _customDict = new();
+    private Dictionary<string, string?>? _customDict = new();
     
     [ObservableConfigProperty(Name = "CustomSettings", Description = "自定义设置列表")]
     private ObservableCollection<NestedSettings> _customSettings = new();

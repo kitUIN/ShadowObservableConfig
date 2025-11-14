@@ -25,6 +25,12 @@ public class ConfigGenerator : IIncrementalGenerator
     private const string DefaultFileExt = ".yaml";
     private const string DefaultVersion = "1.0.0";
 
+    // 使用包含 nullable 注释的类型显示格式（确保生成的类型字符串包含 '?'）
+    private static readonly SymbolDisplayFormat FullyQualifiedWithNullable =
+        SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
+            SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
+            SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+
     /// <summary>
     /// 初始化增量生成器
     /// </summary>
@@ -173,7 +179,7 @@ public class ConfigGenerator : IIncrementalGenerator
             var fieldAttribute = member.GetAttribute(ConfigFieldAttributeName, compilation);
             if (fieldAttribute == null) continue;
 
-            var fieldType = member.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            var fieldType = member.Type.ToDisplayString(FullyQualifiedWithNullable);
             var isEntityClass = IsEntityClass(member.Type, compilation);
             var isCollectionOfEntities = IsCollectionOfEntities(member.Type, compilation);
             // 如果是实体集合，则必然是ObservableCollection
@@ -187,9 +193,9 @@ public class ConfigGenerator : IIncrementalGenerator
                 Description = GetAttributeValue(fieldAttribute, "Description", ""),
                 Alias = GetAttributeValue(fieldAttribute, "Alias", propName),
                 AutoSave = GetAttributeValue(fieldAttribute, "AutoSave", "true").ToLower() == "true",
-                IsEntityClass = isEntityClass,
-                IsObservableCollection = isObservableCollection,
-                IsCollectionOfEntities = isCollectionOfEntities
+                IsEntityClassFlag = isEntityClass,
+                IsObservableCollectionFlag = isObservableCollection,
+                IsCollectionOfEntitiesFlag = isCollectionOfEntities
             };
 
             configFields.Add(fieldInfo);
@@ -246,7 +252,7 @@ public class ConfigGenerator : IIncrementalGenerator
             var yamlMemberAttribute = BuildMemberAttribute(field, propertyName, fileExt);
 
             // 根据字段类型生成不同的属性实现
-            if (field.IsEntityClass)
+            if (field.IsEntityClassFlag)
             {
                 properties.AppendLine(GenerateEntityProperty(field, privateField, propertyName, fieldType,
                     yamlMemberAttribute));
@@ -254,24 +260,24 @@ public class ConfigGenerator : IIncrementalGenerator
                 initialization.AppendLine(
                     $"        else {propertyName}.ConfigChanged += On{propertyName}ConfigChanged;");
             }
-            else if (field.IsObservableCollection)
+            else if (field.IsObservableCollectionFlag)
             {
                 properties.AppendLine(GenerateEntityCollectionProperty(field, privateField, propertyName, fieldType,
                     yamlMemberAttribute));
                 initialization.AppendLine($"        if ({propertyName} == null) {propertyName} = new();");
-                if (field.IsCollectionOfEntities)
+                if (field.IsCollectionOfEntitiesFlag)
                 {
                     initialization.Append($$"""
-                                                    else
-                                                    {
-                                                        {{propertyName}}.CollectionChanged += On{{propertyName}}CollectionChanged;
-                                                        foreach(var item in {{propertyName}})
-                                                        {
-                                                            if (item is global::ShadowObservableConfig.BaseConfig configItem)
-                                                                configItem.ConfigChanged += On{{propertyName}}ItemConfigChanged;
-                                                        }
-                                                    }
-                                            """);
+                                                     else
+                                                     {
+                                                         {{propertyName}}.CollectionChanged += On{{propertyName}}CollectionChanged;
+                                                         foreach(var item in {{propertyName}})
+                                                         {
+                                                             if (item is global::ShadowObservableConfig.BaseConfig configItem)
+                                                                 configItem.ConfigChanged += On{{propertyName}}ItemConfigChanged;
+                                                         }
+                                                     }
+                                             """);
                 }
                 else
                 {
@@ -636,7 +642,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                                  OnPropertyChanged(nameof({{propertyName}}));
                                                  After{{propertyName}}Changed(oldValue, value);
                                                  if (!Initialized) return;
-                                                 OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}), {{field.AutoSave.ToString().ToLower()}});
+                                                 OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, value.GetType(), {{field.AutoSave.ToString().ToLower()}});
                                              }
                                          }
                                      }
@@ -663,7 +669,7 @@ public class ConfigGenerator : IIncrementalGenerator
     /// <returns>如果是DateTime类型则返回true，否则返回false</returns>
     private  static bool IsDateTimeType(string fieldType)
     {
-        return fieldType is "global::System.DateTime" or "System.DateTime";
+        return fieldType is "global::System.DateTime" or "System.DateTime" or "global::System.Nullable<global::System.DateTime>" or "System.Nullable<global::System.DateTime>";
     }
 
     /// <summary>
@@ -690,7 +696,7 @@ public class ConfigGenerator : IIncrementalGenerator
                                  {{privateField}}.ConfigChanged += On{{propertyName}}ConfigChanged;
                                  if (!Initialized) return;
                                  OnPropertyChanged(nameof({{propertyName}}));
-                                 OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}), {{field.AutoSave.ToString().ToLower()}});
+                                 OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, value.GetType(), {{field.AutoSave.ToString().ToLower()}});
                              }
                          }
                      }
@@ -718,7 +724,7 @@ public class ConfigGenerator : IIncrementalGenerator
         var collectionEntitySet1Builder = new StringBuilder();
         var collectionEntitySet2Builder = new StringBuilder();
         var collectionChangedBuilder = new StringBuilder();
-        if (field.IsCollectionOfEntities)
+        if (field.IsCollectionOfEntitiesFlag)
         {
             collectionChangedBuilder.Append($$"""
                                                       if (e.Action != global::System.Collections.Specialized.NotifyCollectionChangedAction.Move)
@@ -785,7 +791,7 @@ public class ConfigGenerator : IIncrementalGenerator
                  {{collectionEntitySet2Builder}}
                                  if (!Initialized) return;
                                  OnPropertyChanged(nameof({{propertyName}}));
-                                 OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, typeof({{fieldType}}), {{field.AutoSave.ToString().ToLower()}});
+                                 OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, value.GetType(), {{field.AutoSave.ToString().ToLower()}});
                              }
                          }
                      }
@@ -793,7 +799,7 @@ public class ConfigGenerator : IIncrementalGenerator
                      protected void On{{propertyName}}CollectionChanged(object? sender, global::System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
                      {
                  {{collectionChangedBuilder}}
-                         OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), e.OldItems, e.NewItems, typeof({{fieldType}}), {{field.AutoSave.ToString().ToLower()}});
+                         OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), e.OldItems, e.NewItems, e.NewItems.GetType(), {{field.AutoSave.ToString().ToLower()}});
                      }
                      
                      /// <summary>
@@ -831,8 +837,9 @@ public class ConfigGenerator : IIncrementalGenerator
         public string Description = "";
         public string Alias = "";
         public bool AutoSave = true;
-        public bool IsEntityClass;
-        public bool IsObservableCollection;
-        public bool IsCollectionOfEntities;
+        public bool IsEntityClassFlag;
+        public bool IsObservableCollectionFlag;
+        public bool IsCollectionOfEntitiesFlag;
     }
 }
+
