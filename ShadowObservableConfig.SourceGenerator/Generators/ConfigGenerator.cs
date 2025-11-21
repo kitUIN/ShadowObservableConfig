@@ -199,6 +199,8 @@ public class ConfigGenerator : IIncrementalGenerator
                 IsCollectionOfEntitiesFlag = isCollectionOfEntities
             };
 
+            GetNotifyProperty(member, fieldInfo);
+
             configFields.Add(fieldInfo);
         }
 
@@ -210,6 +212,41 @@ public class ConfigGenerator : IIncrementalGenerator
         }
 
         return configFields;
+    }
+
+    private static void GetNotifyProperty(IFieldSymbol member, ConfigFieldInfo fieldInfo)
+    {
+        // Collect NotifyPropertyChangedFor targets if present on the field
+        try
+        {
+            foreach (var arg in from attr in member.GetAttributes()
+                     let attrName = attr.AttributeClass?.Name
+                     where string.Equals(attrName, "ObservableConfigPropertyChangedForAttribute",
+                               StringComparison.Ordinal) ||
+                           string.Equals(attr.AttributeClass?.ToDisplayString(),
+                               "ObservableConfigPropertyChangedForAttribute",
+                               StringComparison.Ordinal)
+                     where attr.ConstructorArguments.Length > 0
+                     select attr.ConstructorArguments[0])
+            {
+                if (arg.Kind == TypedConstantKind.Array && arg.Values != null)
+                {
+                    foreach (var s in arg.Values.Select(v => v.Value?.ToString()).Where(s => !string.IsNullOrEmpty(s)))
+                    {
+                        fieldInfo.NotifyTargets.Add(s!);
+                    }
+                }
+                else
+                {
+                    var s = arg.Value?.ToString();
+                    if (!string.IsNullOrEmpty(s)) fieldInfo.NotifyTargets.Add(s!);
+                }
+            }
+        }
+        catch
+        {
+            // ignore any parsing issues of attributes to avoid breaking generation
+        }
     }
 
     /// <summary>
@@ -384,7 +421,7 @@ public class ConfigGenerator : IIncrementalGenerator
                          /// ConfigLoader
                          /// </summary>
                          {{ignoreAttribute}}
-                         protected static global::ShadowObservableConfig.IConfigLoader Loader { get; private set; }
+                         protected static global::ShadowObservableConfig.IConfigLoader? Loader { get; private set; }
 
                          /// <summary>
                          /// Constructor
@@ -438,7 +475,7 @@ public class ConfigGenerator : IIncrementalGenerator
                          /// </summary>
                          public void Save()
                          {
-                             Loader.Save(Info.ConfigFilePath, this);
+                             Loader?.Save(Info.ConfigFilePath, this);
                          }
                          
                          /// <summary>
@@ -592,6 +629,10 @@ public class ConfigGenerator : IIncrementalGenerator
         return enumerableInterface?.TypeArguments[0];
     }
 
+    private static string GetSafeT(string fieldType)
+    {
+        return fieldType.EndsWith("?") ? fieldType.Substring(0, fieldType.Length - 1) : fieldType;
+    }
 
     /// <summary>
     /// 生成简单属性（非实体类）
@@ -638,10 +679,10 @@ public class ConfigGenerator : IIncrementalGenerator
                                                  var oldValue = {{privateField}};
                                                  Before{{propertyName}}Changed(ref value);
                                                  {{privateField}} = value;
-                                                 OnPropertyChanged(nameof({{propertyName}}));
+                                                 OnPropertyChanged(nameof({{propertyName}}));{{field.NotifyTargetsString()}}
                                                  After{{propertyName}}Changed(oldValue, value);
                                                  if (!Initialized) return;
-                                                 OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, value.GetType(), {{field.AutoSave.ToString().ToLower()}});
+                                                 OnConfigChanged<{{GetSafeT(fieldType)}}>(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, {{field.AutoSave.ToString().ToLower()}});
                                              }
                                          }
                                      }
@@ -695,8 +736,8 @@ public class ConfigGenerator : IIncrementalGenerator
                                  {{privateField}} = value;
                                  {{privateField}}.ConfigChanged += On{{propertyName}}ConfigChanged;
                                  if (!Initialized) return;
-                                 OnPropertyChanged(nameof({{propertyName}}));
-                                 OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, value.GetType(), {{field.AutoSave.ToString().ToLower()}});
+                                 OnPropertyChanged(nameof({{propertyName}}));{{field.NotifyTargetsString()}}
+                                 OnConfigChanged<{{GetSafeT(fieldType)}}>(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, {{field.AutoSave.ToString().ToLower()}});
                              }
                          }
                      }
@@ -726,6 +767,7 @@ public class ConfigGenerator : IIncrementalGenerator
         var collectionChangedBuilder = new StringBuilder();
         if (field.IsCollectionOfEntitiesFlag)
         {
+            collectionChangedBuilder.AppendLine();
             collectionChangedBuilder.Append($$"""
                                                       if (e.Action != global::System.Collections.Specialized.NotifyCollectionChangedAction.Move)
                                                       {
@@ -792,16 +834,15 @@ public class ConfigGenerator : IIncrementalGenerator
                                  {{privateField}}.CollectionChanged += On{{propertyName}}CollectionChanged;
                  {{collectionEntitySet2Builder}}
                                  if (!Initialized) return;
-                                 OnPropertyChanged(nameof({{propertyName}}));
-                                 OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, value.GetType(), {{field.AutoSave.ToString().ToLower()}});
+                                 OnPropertyChanged(nameof({{propertyName}}));{{field.NotifyTargetsString()}}
+                                 OnConfigChanged<{{GetSafeT(fieldType)}}>(nameof({{propertyName}}), nameof({{propertyName}}), oldValue, value, {{field.AutoSave.ToString().ToLower()}});
                              }
                          }
                      }
                      
                      protected void On{{propertyName}}CollectionChanged(object? sender, global::System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-                     {
-                 {{collectionChangedBuilder}}
-                         OnConfigChanged(nameof({{propertyName}}), nameof({{propertyName}}), e.OldItems, e.NewItems, e.NewItems.GetType(), {{field.AutoSave.ToString().ToLower()}});
+                     {{{collectionChangedBuilder}}
+                         OnConfigChanged<{{GetSafeT(fieldType)}}>(nameof({{propertyName}}), nameof({{propertyName}}), e.OldItems, e.NewItems, {{field.AutoSave.ToString().ToLower()}});
                      }
                      
                      /// <summary>
@@ -843,5 +884,17 @@ public class ConfigGenerator : IIncrementalGenerator
         public bool IsEntityClassFlag;
         public bool IsObservableCollectionFlag;
         public bool IsCollectionOfEntitiesFlag;
+        public List<string> NotifyTargets { get; } = [];
+
+        public string NotifyTargetsString()
+        {
+            StringBuilder extraNotifyBuilder = new();
+            foreach (var target in NotifyTargets)
+            {
+                extraNotifyBuilder.Append($"\n                OnPropertyChanged(\"{target}\");");
+            }
+
+            return extraNotifyBuilder.ToString();
+        }
     }
 }

@@ -62,4 +62,21 @@ public abstract class BaseConfig : INotifyPropertyChanged
         ConfigChanged?.Invoke(this,
             new ConfigChangedEventArgs(propertyName, fullPropertyPath, oldValue, newValue, type, autoSave));
     }
+    
+    /// <summary>
+    /// Triggers the config changed event with full property path
+    /// Call this method when config properties change for nested config notifications with full path
+    /// </summary>
+    /// <param name="propertyName">The name of the changed property</param>
+    /// <param name="fullPropertyPath">The full property path from root</param>
+    /// <param name="oldValue">The old value of the property</param>
+    /// <param name="newValue">The new value of the property</param>
+    /// <param name="autoSave">Whether to automatically save the configuration file when this change occurs</param>
+    /// <typeparam name="T">The type of the property</typeparam>
+    protected virtual void OnConfigChanged<T>(string propertyName, string fullPropertyPath, object? oldValue,
+        object? newValue, bool autoSave = true)
+    {
+        ConfigChanged?.Invoke(this,
+            new ConfigChangedEventArgs(propertyName, fullPropertyPath, oldValue, newValue, typeof(T), autoSave));
+    }
 }

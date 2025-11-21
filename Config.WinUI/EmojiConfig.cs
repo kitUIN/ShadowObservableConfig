@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using ShadowObservableConfig.Attributes;
 using System.Collections.ObjectModel;
-
 namespace Config.WinUI;
 
 /// <summary>
@@ -44,7 +43,7 @@ public enum EmojiRenderMode
 public partial class EmojiConfig
 {
     [ObservableConfigProperty(Description = "默认表情大小")]
-    private int defaultEmojiSize;
+    private int _defaultEmojiSize;
 
     [ObservableConfigProperty(Description = "启用自动完成")]
     private bool _enableAutoComplete;
@@ -53,6 +52,8 @@ public partial class EmojiConfig
     private int _maxEmojiHistory;
 
     [ObservableConfigProperty(Name = "DefaultSkinTone", Description = "默认肤色")]
+    [ObservableConfigPropertyChangedFor(nameof(OnlyName))]
+    [ObservableConfigPropertyChangedFor(nameof(AnimationSpeed))]
     private string? _defaultSkinTone;
 
     [ObservableConfigProperty(Name = "AnimationSpeed", Description = "动画速度")]
@@ -60,6 +61,12 @@ public partial class EmojiConfig
 
     [ObservableConfigProperty(Description = "忽略", Ignore = true)]
     private double _ignoreItem;
+
+    public string? OnlyName
+    {
+        get => DefaultSkinTone;
+        set => DefaultSkinTone = value;
+    }
 
     [ObservableConfigProperty(Name = "RenderMode", Description = "表情渲染模式")]
     private EmojiRenderMode _renderMode;
@@ -78,7 +85,6 @@ public partial class EmojiConfig
 
     [ObservableConfigProperty(Name = "CustomSettings", Description = "自定义设置列表")]
     private ObservableCollection<NestedSettings> _customSettings = new();
-    
 }
 
 /// <summary>
