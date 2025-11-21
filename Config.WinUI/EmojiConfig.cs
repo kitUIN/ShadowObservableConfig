@@ -58,6 +58,9 @@ public partial class EmojiConfig
     [ObservableConfigProperty(Name = "AnimationSpeed", Description = "动画速度")]
     private double _animationSpeed;
 
+    [ObservableConfigProperty(Description = "忽略", Ignore = true)]
+    private double _ignoreItem;
+
     [ObservableConfigProperty(Name = "RenderMode", Description = "表情渲染模式")]
     private EmojiRenderMode _renderMode;
 
@@ -72,9 +75,10 @@ public partial class EmojiConfig
 
     [ObservableConfigProperty(Name = "CustomDict", Description = "自定义Dict")]
     private Dictionary<string, string?>? _customDict = new();
-    
+
     [ObservableConfigProperty(Name = "CustomSettings", Description = "自定义设置列表")]
     private ObservableCollection<NestedSettings> _customSettings = new();
+    
 }
 
 /// <summary>

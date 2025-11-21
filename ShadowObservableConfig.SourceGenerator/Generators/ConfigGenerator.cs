@@ -193,6 +193,7 @@ public class ConfigGenerator : IIncrementalGenerator
                 Description = GetAttributeValue(fieldAttribute, "Description", ""),
                 Alias = GetAttributeValue(fieldAttribute, "Alias", propName),
                 AutoSave = GetAttributeValue(fieldAttribute, "AutoSave", "true").ToLower() == "true",
+                Ignore = GetAttributeValue(fieldAttribute, "Ignore", "false").ToLower() == "true",
                 IsEntityClassFlag = isEntityClass,
                 IsObservableCollectionFlag = isObservableCollection,
                 IsCollectionOfEntitiesFlag = isCollectionOfEntities
@@ -263,21 +264,21 @@ public class ConfigGenerator : IIncrementalGenerator
             else if (field.IsObservableCollectionFlag)
             {
                 properties.AppendLine(GenerateEntityCollectionProperty(field, privateField, propertyName, fieldType,
-                    yamlMemberAttribute));
+                    yamlMemberAttribute, ignoreAttribute));
                 initialization.AppendLine($"        if ({propertyName} == null) {propertyName} = new();");
                 if (field.IsCollectionOfEntitiesFlag)
                 {
                     initialization.Append($$"""
-                                                     else
-                                                     {
-                                                         {{propertyName}}.CollectionChanged += On{{propertyName}}CollectionChanged;
-                                                         foreach(var item in {{propertyName}})
-                                                         {
-                                                             if (item is global::ShadowObservableConfig.BaseConfig configItem)
-                                                                 configItem.ConfigChanged += On{{propertyName}}ItemConfigChanged;
-                                                         }
-                                                     }
-                                             """);
+                                                    else
+                                                    {
+                                                        {{propertyName}}.CollectionChanged += On{{propertyName}}CollectionChanged;
+                                                        foreach(var item in {{propertyName}})
+                                                        {
+                                                            if (item is global::ShadowObservableConfig.BaseConfig configItem)
+                                                                configItem.ConfigChanged += On{{propertyName}}ItemConfigChanged;
+                                                        }
+                                                    }
+                                            """);
                 }
                 else
                 {
@@ -481,12 +482,8 @@ public class ConfigGenerator : IIncrementalGenerator
         {
             return "[global::YamlDotNet.Serialization.YamlIgnore]";
         }
-        else if (fileExt == ".json")
-        {
-            return "[global::Newtonsoft.Json.JsonIgnore]";
-        }
 
-        return "";
+        return fileExt == ".json" ? "[global::Newtonsoft.Json.JsonIgnore]" : "";
     }
 
     /// <summary>
@@ -624,11 +621,13 @@ public class ConfigGenerator : IIncrementalGenerator
                                      """);
         }
 
+        var ignoreAttr = field.Ignore ? ignoreAttribute : "";
         propertyBuilder.Append($$"""
                                      /// <summary>
                                      /// {{field.Description}}
                                      /// </summary>
                                      {{yamlMemberAttribute}}
+                                     {{ignoreAttr}}
                                      public {{fieldType}} {{propertyName}}
                                      {
                                          get => {{privateField}};
@@ -667,9 +666,10 @@ public class ConfigGenerator : IIncrementalGenerator
     /// </summary>
     /// <param name="fieldType">字段类型字符串</param>
     /// <returns>如果是DateTime类型则返回true，否则返回false</returns>
-    private  static bool IsDateTimeType(string fieldType)
+    private static bool IsDateTimeType(string fieldType)
     {
-        return fieldType is "global::System.DateTime" or "System.DateTime" or "global::System.Nullable<global::System.DateTime>" or "System.Nullable<global::System.DateTime>";
+        return fieldType is "global::System.DateTime" or "System.DateTime"
+            or "global::System.Nullable<global::System.DateTime>" or "System.Nullable<global::System.DateTime>";
     }
 
     /// <summary>
@@ -719,7 +719,7 @@ public class ConfigGenerator : IIncrementalGenerator
     /// 生成实体类集合属性（支持集合中实体的递归变更通知）
     /// </summary>
     private static string GenerateEntityCollectionProperty(ConfigFieldInfo field, string privateField,
-        string propertyName, string fieldType, string yamlMemberAttribute)
+        string propertyName, string fieldType, string yamlMemberAttribute, string ignoreAttribute)
     {
         var collectionEntitySet1Builder = new StringBuilder();
         var collectionEntitySet2Builder = new StringBuilder();
@@ -771,11 +771,13 @@ public class ConfigGenerator : IIncrementalGenerator
                                                  """);
         }
 
+        var ignoreAttr = field.Ignore ? ignoreAttribute : "";
         return $$"""
                      /// <summary>
                      /// {{field.Description}}
                      /// </summary>
                      {{yamlMemberAttribute}}
+                     {{ignoreAttr}}
                      public {{fieldType}} {{propertyName}}
                      {
                          get => {{privateField}};
@@ -837,9 +839,9 @@ public class ConfigGenerator : IIncrementalGenerator
         public string Description = "";
         public string Alias = "";
         public bool AutoSave = true;
+        public bool Ignore;
         public bool IsEntityClassFlag;
         public bool IsObservableCollectionFlag;
         public bool IsCollectionOfEntitiesFlag;
     }
 }
-

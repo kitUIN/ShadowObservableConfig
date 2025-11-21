@@ -3,6 +3,7 @@
 /// <summary>
 /// Used to identify this property as an Observable Configuration Property
 /// </summary>
+[AttributeUsage(AttributeTargets.Field)]
 public class ObservableConfigPropertyAttribute : Attribute
 {
     /// <summary>
@@ -19,6 +20,11 @@ public class ObservableConfigPropertyAttribute : Attribute
     /// Property alias for serialization
     /// </summary>
     public string? Alias { get; init; }
+
+    /// <summary>
+    /// Property ignore
+    /// </summary>
+    public bool Ignore { get; init; }
 
     /// <summary>
     /// If true, the configuration will be automatically saved when a property value changes
