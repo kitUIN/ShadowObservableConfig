@@ -7,7 +7,7 @@
 	  <LangVersion>12</LangVersion>
 	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
 	  <!-- NuGet 包信息 -->
-	  <Version>0.6.2</Version>
+	  <Version>0.6.3</Version>
 	  <PackageId>ShadowObservableConfig.Yaml</PackageId>
 	  <Authors>kitUIN</Authors>
 	  <Company>kitUIN</Company>
@@ -36,7 +36,9 @@
   <!-- Release 模式：使用 NuGet 包引用 -->
   <ItemGroup Condition="'$(Configuration)' != 'Debug'">
     <PackageReference Include="ShadowObservableConfig" Version="0.6.2" />
-    <PackageReference Include="ShadowObservableConfig.SourceGenerator" Version="0.6.2"/>
+	<PackageReference Include="ShadowObservableConfig.SourceGenerator" Version="0.6.2"
+						PrivateAssets="none"
+						IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
   </ItemGroup>
 
 	<ItemGroup>
